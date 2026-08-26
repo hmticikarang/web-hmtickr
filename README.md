@@ -141,8 +141,7 @@ cd himpunan-website
 ### Install semua dependency
 
 ```bash
-npm install @supabase/supabase-js @react-pdf/renderer lucide-react qrcode.react
-npm install papaparse bcryptjs
+npm install
 ```
 
 | Package | Kegunaan |

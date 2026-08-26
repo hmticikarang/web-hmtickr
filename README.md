@@ -1,6 +1,6 @@
 # Website Himpunan Mahasiswa
 
-Platform web terpadu untuk Himpunan Mahasiswa: company profile organisasi, katalog program kerja,
+website company profile organisasi, katalog program kerja,
 forum aspirasi mahasiswa, sistem Open Recruitment (Oprec) dengan generator PDF & QR Code otomatis,
 serta admin dashboard untuk mengelola semuanya.
 
@@ -141,8 +141,7 @@ cd himpunan-website
 ### Install semua dependency
 
 ```bash
-npm install @supabase/supabase-js @react-pdf/renderer lucide-react qrcode.react
-npm install papaparse bcryptjs
+npm install
 ```
 
 | Package | Kegunaan |

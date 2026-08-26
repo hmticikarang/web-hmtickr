@@ -1,0 +1,18 @@
+# Dependency modules (Penyebab utama 200MB+)
+/node_modules
+
+# Build & Cache Next.js (Penyebab utama 100MB+)
+/.next/
+/out/
+/build/
+
+# File Kredensial Rahasia Supabase
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# System & Editor files
+.DS_Store
+Thumbs.db
+/.vscode/

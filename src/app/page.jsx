@@ -78,13 +78,9 @@ export default async function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-slate-200">
-              <Sparkles className="h-3.5 w-3.5" />
-              Wadah Aspirasi & Kolaborasi Mahasiswa
-            </span>
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Himpunan Mahasiswa
-              <span className="block text-slate-300">Bergerak, Berkarya, Berdampak.</span>
+              <span className="block text-slate-300">Teknologi Informasi Cikarang</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor

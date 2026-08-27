@@ -57,3 +57,71 @@ export async function POST(request) {
 
   return NextResponse.json({ project: data });
 }
+
+export async function PUT(request) {
+  const admin = await verifyAdminSession(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'Sesi admin tidak valid.' }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { id, title, background, achievements, division_id, photos_urls } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID proker wajib disertakan.' }, { status: 400 });
+  }
+
+  if (!title || !background || !achievements) {
+    return NextResponse.json(
+      { error: 'Judul, latar belakang, dan capaian wajib diisi.' },
+      { status: 400 }
+    );
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .update({
+      title,
+      background,
+      achievements,
+      division_id: division_id || null,
+      photos_urls: photos_urls || [],
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  revalidatePath('/');
+  revalidatePath('/proker');
+
+  return NextResponse.json({ project: data });
+}
+
+export async function DELETE(request) {
+  const admin = await verifyAdminSession(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'Sesi admin tidak valid.' }, { status: 401 });
+  }
+
+  const { id } = await request.json();
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID proker wajib disertakan.' }, { status: 400 });
+  }
+
+  const { error } = await supabaseAdmin.from('projects').delete().eq('id', id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  revalidatePath('/');
+  revalidatePath('/proker');
+
+  return NextResponse.json({ success: true });
+}
+

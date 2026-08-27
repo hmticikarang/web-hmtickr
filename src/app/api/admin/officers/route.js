@@ -80,3 +80,49 @@ export async function DELETE(request) {
 
   return NextResponse.json({ success: true });
 }
+
+export async function PUT(request) {
+  const admin = await verifyAdminSession(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'Sesi admin tidak valid.' }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { id, full_name, position, division_id, photo_url, linkedin_url, instagram_url } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID pengurus wajib disertakan.' }, { status: 400 });
+  }
+
+  if (!full_name || !position) {
+    return NextResponse.json({ error: 'Nama dan jabatan wajib diisi.' }, { status: 400 });
+  }
+
+  const updateData = {
+    full_name,
+    position,
+    division_id: division_id || null,
+    linkedin_url: linkedin_url || null,
+    instagram_url: instagram_url || null,
+  };
+
+  if (photo_url !== undefined) {
+    updateData.photo_url = photo_url;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('officers')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  revalidatePath('/struktur');
+
+  return NextResponse.json({ officer: data });
+}
+

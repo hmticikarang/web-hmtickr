@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
   Trash2,
   User,
+  Pencil,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import LoginForm from '@/components/admin/LoginForm';
@@ -72,7 +73,7 @@ export default function AdminPage() {
     fetch('/api/admin/settings')
       .then((res) => res.json())
       .then((data) => setOprecStatus(data.oprec_status || 'closed'))
-      .catch(() => {});
+      .catch(() => { });
   }, [session]);
 
   async function handleToggleOprec() {
@@ -126,14 +127,12 @@ export default function AdminPage() {
               <button
                 onClick={handleToggleOprec}
                 disabled={togglingStatus}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
-                  oprecStatus === 'open' ? 'bg-emerald-500' : 'bg-slate-300'
-                }`}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${oprecStatus === 'open' ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                    oprecStatus === 'open' ? 'translate-x-5' : 'translate-x-0.5'
-                  }`}
+                  className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${oprecStatus === 'open' ? 'translate-x-5' : 'translate-x-0'
+                    }`}
                 />
               </button>
             </div>
@@ -156,11 +155,10 @@ export default function AdminPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
-                  activeTab === tab.key
-                    ? 'border-[#0F172A] text-[#0F172A]'
-                    : 'border-transparent text-slate-400 hover:text-slate-600'
-                }`}
+                className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === tab.key
+                  ? 'border-[#0F172A] text-[#0F172A]'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
@@ -373,9 +371,9 @@ function PendaftarTab({ session }) {
                   <td className="px-4 py-3 text-xs text-slate-500">
                     {a.interview_datetime
                       ? new Date(a.interview_datetime).toLocaleString('id-ID', {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
-                        })
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })
                       : '-'}
                   </td>
                   <td className="px-4 py-3">
@@ -431,17 +429,15 @@ function CmsTab({ session }) {
       <div className="mb-6 flex gap-2">
         <button
           onClick={() => setSubTab('proker')}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-            subTab === 'proker' ? 'bg-[#0F172A] text-white' : 'bg-slate-100 text-slate-600'
-          }`}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold ${subTab === 'proker' ? 'bg-[#0F172A] text-white' : 'bg-slate-100 text-slate-600'
+            }`}
         >
           Program Kerja
         </button>
         <button
           onClick={() => setSubTab('pengurus')}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-            subTab === 'pengurus' ? 'bg-[#0F172A] text-white' : 'bg-slate-100 text-slate-600'
-          }`}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold ${subTab === 'pengurus' ? 'bg-[#0F172A] text-white' : 'bg-slate-100 text-slate-600'
+            }`}
         >
           Pengurus
         </button>
@@ -453,8 +449,31 @@ function CmsTab({ session }) {
 }
 
 function ProkerCmsForm({ session }) {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [editingProker, setEditingProker] = useState(null);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <ProkerAddForm
+        session={session}
+        editingProker={editingProker}
+        setEditingProker={setEditingProker}
+        onAdded={() => setRefreshKey((k) => k + 1)}
+      />
+      <ProkerList
+        session={session}
+        refreshKey={refreshKey}
+        setEditingProker={setEditingProker}
+        onDeleted={() => setRefreshKey((k) => k + 1)}
+      />
+    </div>
+  );
+}
+
+function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
   const [divisions, setDivisions] = useState([]);
   const [form, setForm] = useState({ title: '', background: '', achievements: '', division_id: '' });
+  const [existingPhotos, setExistingPhotos] = useState([]); // array of URLs
   const [photos, setPhotos] = useState([]); // array of File
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -467,12 +486,34 @@ function ProkerCmsForm({ session }) {
       .then(({ data }) => setDivisions(data || []));
   }, []);
 
+  useEffect(() => {
+    if (editingProker) {
+      setForm({
+        title: editingProker.title || '',
+        background: editingProker.background || '',
+        achievements: editingProker.achievements || '',
+        division_id: editingProker.division_id || '',
+      });
+      setExistingPhotos(editingProker.photos_urls || []);
+      setPhotos([]);
+      setSuccessMsg('');
+    } else {
+      setForm({ title: '', background: '', achievements: '', division_id: '' });
+      setExistingPhotos([]);
+      setPhotos([]);
+    }
+  }, [editingProker]);
+
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   function handlePhotoSelect(e) {
     setPhotos(Array.from(e.target.files));
+  }
+
+  function handleRemoveExistingPhoto(urlToRemove) {
+    setExistingPhotos((prev) => prev.filter((url) => url !== urlToRemove));
   }
 
   async function handleSubmit(e) {
@@ -494,17 +535,30 @@ function ProkerCmsForm({ session }) {
       }
       setUploading(false);
 
-      // 2. Simpan proker
-      const res = await authFetch(session, '/api/admin/projects', {
-        method: 'POST',
+      const isEdit = !!editingProker;
+      const url = '/api/admin/projects';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const finalPhotosUrls = [...existingPhotos, ...uploadedUrls];
+
+      const res = await authFetch(session, url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, photos_urls: uploadedUrls }),
+        body: JSON.stringify({ ...form, photos_urls: finalPhotosUrls, id: isEdit ? editingProker.id : undefined }),
       });
 
       if (res.ok) {
-        setSuccessMsg('Proker berhasil ditambahkan!');
-        setForm({ title: '', background: '', achievements: '', division_id: '' });
-        setPhotos([]);
+        setSuccessMsg(isEdit ? 'Proker berhasil diperbarui!' : 'Proker berhasil ditambahkan!');
+        if (!isEdit) {
+          setForm({ title: '', background: '', achievements: '', division_id: '' });
+          setPhotos([]);
+        } else {
+          setEditingProker(null);
+        }
+        onAdded?.();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Gagal menyimpan data proker.');
       }
     } finally {
       setSaving(false);
@@ -512,10 +566,10 @@ function ProkerCmsForm({ session }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <form onSubmit={handleSubmit} className="h-fit rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="mb-5 flex items-center gap-2 text-base font-bold text-[#0F172A]">
-        <Plus className="h-4 w-4" />
-        Tambah Program Kerja Baru
+        {editingProker ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+        {editingProker ? 'Edit Program Kerja' : 'Tambah Program Kerja Baru'}
       </h3>
 
       {successMsg && (
@@ -574,10 +628,30 @@ function ProkerCmsForm({ session }) {
         />
       </div>
 
+      {editingProker && existingPhotos.length > 0 && (
+        <div className="mb-4">
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">Foto Galeri Saat Ini</label>
+          <div className="grid grid-cols-4 gap-2">
+            {existingPhotos.map((url, idx) => (
+              <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-slate-200 group">
+                <img src={url} alt="Gallery" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveExistingPhoto(url)}
+                  className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-semibold"
+                >
+                  Hapus
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
           <ImageIcon className="h-3.5 w-3.5" />
-          Foto Galeri
+          {editingProker ? 'Tambah Foto Galeri Baru' : 'Foto Galeri'}
         </label>
         <input
           type="file"
@@ -591,15 +665,122 @@ function ProkerCmsForm({ session }) {
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F172A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E3A8A] disabled:opacity-60"
-      >
-        {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-        {uploading ? 'Mengunggah foto...' : saving ? 'Menyimpan...' : 'Simpan Proker'}
-      </button>
+      <div className="flex gap-3">
+        {editingProker && (
+          <button
+            type="button"
+            onClick={() => setEditingProker(null)}
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Batal
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#0F172A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E3A8A] disabled:opacity-60 transition-colors"
+        >
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          {uploading ? 'Mengunggah foto...' : saving ? 'Menyimpan...' : editingProker ? 'Update Proker' : 'Simpan Proker'}
+        </button>
+      </div>
     </form>
+  );
+}
+
+function ProkerList({ session, refreshKey, setEditingProker, onDeleted }) {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    authFetch(session, '/api/admin/projects')
+      .then((res) => res.json())
+      .then((data) => setProjects(data.projects || []))
+      .finally(() => setLoading(false));
+  }, [session, refreshKey]);
+
+  async function handleDelete(project) {
+    if (!confirm(`Hapus proker "${project.title}"?`)) return;
+    setDeletingId(project.id);
+    const res = await authFetch(session, '/api/admin/projects', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: project.id }),
+    });
+    setDeletingId(null);
+    if (res.ok) {
+      onDeleted?.();
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Gagal menghapus proker.');
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="mb-5 flex items-center gap-2 text-base font-bold text-[#0F172A]">
+        <FolderKanban className="h-4 w-4" />
+        Daftar Program Kerja ({projects.length})
+      </h3>
+
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-5 w-5 animate-spin text-[#1E3A8A]" />
+        </div>
+      ) : projects.length === 0 ? (
+        <p className="py-6 text-center text-sm text-slate-400">Belum ada proker terdaftar.</p>
+      ) : (
+        <ul className="max-h-[560px] space-y-2 overflow-y-auto animate-fadeIn">
+          {projects.map((p) => (
+            <li
+              key={p.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5 hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                  {p.photos_urls?.[0] ? (
+                    <img src={p.photos_urls[0]} alt={p.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
+                      <FolderKanban className="h-4 w-4 text-white/60" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#0F172A]">{p.title}</p>
+                  <p className="truncate text-xs text-slate-500">
+                    {p.divisions?.name || 'Tanpa Divisi'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setEditingProker(p)}
+                  className="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-colors"
+                  title="Edit proker"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(p)}
+                  disabled={deletingId === p.id}
+                  className="flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors"
+                  title="Hapus proker"
+                >
+                  {deletingId === p.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -607,16 +788,27 @@ function PengurusCmsForm({ session }) {
   // refreshKey dipakai untuk memicu OfficersList fetch ulang setelah tambah/hapus,
   // tanpa perlu mengangkat seluruh state daftar pengurus ke sini.
   const [refreshKey, setRefreshKey] = useState(0);
+  const [editingOfficer, setEditingOfficer] = useState(null);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <PengurusAddForm session={session} onAdded={() => setRefreshKey((k) => k + 1)} />
-      <OfficersList session={session} refreshKey={refreshKey} onDeleted={() => setRefreshKey((k) => k + 1)} />
+      <PengurusAddForm
+        session={session}
+        editingOfficer={editingOfficer}
+        setEditingOfficer={setEditingOfficer}
+        onAdded={() => setRefreshKey((k) => k + 1)}
+      />
+      <OfficersList
+        session={session}
+        refreshKey={refreshKey}
+        setEditingOfficer={setEditingOfficer}
+        onDeleted={() => setRefreshKey((k) => k + 1)}
+      />
     </div>
   );
 }
 
-function PengurusAddForm({ session, onAdded }) {
+function PengurusAddForm({ session, editingOfficer, setEditingOfficer, onAdded }) {
   const [divisions, setDivisions] = useState([]);
   const [form, setForm] = useState({
     full_name: '',
@@ -637,6 +829,29 @@ function PengurusAddForm({ session, onAdded }) {
       .then(({ data }) => setDivisions(data || []));
   }, []);
 
+  useEffect(() => {
+    if (editingOfficer) {
+      setForm({
+        full_name: editingOfficer.full_name || '',
+        position: editingOfficer.position || '',
+        division_id: editingOfficer.division_id || '',
+        linkedin_url: editingOfficer.linkedin_url || '',
+        instagram_url: editingOfficer.instagram_url || '',
+      });
+      setPhoto(null);
+      setSuccessMsg('');
+    } else {
+      setForm({
+        full_name: '',
+        position: '',
+        division_id: '',
+        linkedin_url: '',
+        instagram_url: '',
+      });
+      setPhoto(null);
+    }
+  }, [editingOfficer]);
+
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
@@ -647,7 +862,7 @@ function PengurusAddForm({ session, onAdded }) {
     setSuccessMsg('');
 
     try {
-      let photo_url = null;
+      let photo_url = editingOfficer ? editingOfficer.photo_url : null;
       if (photo) {
         setUploading(true);
         const fd = new FormData();
@@ -659,17 +874,33 @@ function PengurusAddForm({ session, onAdded }) {
         setUploading(false);
       }
 
-      const res = await authFetch(session, '/api/admin/officers', {
-        method: 'POST',
+      const isEdit = !!editingOfficer;
+      const url = '/api/admin/officers';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const payload = { ...form, photo_url };
+      if (isEdit) {
+        payload.id = editingOfficer.id;
+      }
+
+      const res = await authFetch(session, url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, photo_url }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        setSuccessMsg('Pengurus berhasil ditambahkan!');
-        setForm({ full_name: '', position: '', division_id: '', linkedin_url: '', instagram_url: '' });
-        setPhoto(null);
+        setSuccessMsg(isEdit ? 'Pengurus berhasil diperbarui!' : 'Pengurus berhasil ditambahkan!');
+        if (!isEdit) {
+          setForm({ full_name: '', position: '', division_id: '', linkedin_url: '', instagram_url: '' });
+          setPhoto(null);
+        } else {
+          setEditingOfficer(null);
+        }
         onAdded?.();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Gagal menyimpan data pengurus.');
       }
     } finally {
       setSaving(false);
@@ -679,8 +910,8 @@ function PengurusAddForm({ session, onAdded }) {
   return (
     <form onSubmit={handleSubmit} className="h-fit rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="mb-5 flex items-center gap-2 text-base font-bold text-[#0F172A]">
-        <Plus className="h-4 w-4" />
-        Tambah Pengurus Baru
+        {editingOfficer ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+        {editingOfficer ? 'Edit Pengurus' : 'Tambah Pengurus Baru'}
       </h3>
 
       {successMsg && (
@@ -751,10 +982,21 @@ function PengurusAddForm({ session, onAdded }) {
         </div>
       </div>
 
+      {editingOfficer && editingOfficer.photo_url && !photo && (
+        <div className="mb-4">
+          <p className="mb-1 text-xs font-medium text-slate-700">Foto Profil Saat Ini:</p>
+          <img
+            src={editingOfficer.photo_url}
+            alt="Profil"
+            className="h-16 w-16 rounded-full object-cover border border-slate-200 shadow-sm"
+          />
+        </div>
+      )}
+
       <div className="mb-6">
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
           <ImageIcon className="h-3.5 w-3.5" />
-          Foto Profil
+          {editingOfficer ? 'Ganti Foto Profil (Opsional)' : 'Foto Profil'}
         </label>
         <input
           type="file"
@@ -764,19 +1006,30 @@ function PengurusAddForm({ session, onAdded }) {
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F172A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E3A8A] disabled:opacity-60"
-      >
-        {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-        {uploading ? 'Mengunggah foto...' : saving ? 'Menyimpan...' : 'Simpan Pengurus'}
-      </button>
+      <div className="flex gap-3">
+        {editingOfficer && (
+          <button
+            type="button"
+            onClick={() => setEditingOfficer(null)}
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Batal
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#0F172A] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E3A8A] disabled:opacity-60 transition-colors"
+        >
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          {uploading ? 'Mengunggah foto...' : saving ? 'Menyimpan...' : editingOfficer ? 'Update Pengurus' : 'Simpan Pengurus'}
+        </button>
+      </div>
     </form>
   );
 }
 
-function OfficersList({ session, refreshKey, onDeleted }) {
+function OfficersList({ session, refreshKey, setEditingOfficer, onDeleted }) {
   const [officers, setOfficers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
@@ -820,11 +1073,11 @@ function OfficersList({ session, refreshKey, onDeleted }) {
       ) : officers.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-400">Belum ada pengurus terdaftar.</p>
       ) : (
-        <ul className="max-h-[560px] space-y-2 overflow-y-auto">
+        <ul className="max-h-[560px] space-y-2 overflow-y-auto animate-fadeIn">
           {officers.map((o) => (
             <li
               key={o.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5"
+              className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5 hover:bg-slate-50 transition-colors"
             >
               <div className="flex min-w-0 items-center gap-3">
                 <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100">
@@ -843,18 +1096,27 @@ function OfficersList({ session, refreshKey, onDeleted }) {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(o)}
-                disabled={deletingId === o.id}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-60"
-                title="Hapus pengurus"
-              >
-                {deletingId === o.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Trash2 className="h-3.5 w-3.5" />
-                )}
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setEditingOfficer(o)}
+                  className="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-colors"
+                  title="Edit pengurus"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(o)}
+                  disabled={deletingId === o.id}
+                  className="flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors"
+                  title="Hapus pengurus"
+                >
+                  {deletingId === o.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

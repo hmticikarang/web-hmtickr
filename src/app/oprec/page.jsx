@@ -28,16 +28,6 @@ const QRCodeCanvas = dynamic(
 // browser setelah submit berhasil), tapi dirender sebagai komponen biasa
 // begitu modulnya selesai dimuat, jadi 100% aman untuk react-pdf.
 
-const MAJORS = [
-  'Teknik Informatika',
-  'Sistem Informasi',
-  'Teknik Elektro',
-  'Manajemen',
-  'Akuntansi',
-  'Ilmu Komunikasi',
-  'Psikologi',
-  'Hukum',
-];
 
 const COHORTS = ['2023', '2024', '2025', '2026'];
 
@@ -72,7 +62,6 @@ export default function OprecPage() {
     nim: '',
     email: '',
     phone_wa: '',
-    major: '',
     cohort: '',
     choice_div_1: '',
     choice_div_2: '',
@@ -171,7 +160,6 @@ export default function OprecPage() {
     if (!formData.nim.trim()) return 'NIM wajib diisi.';
     if (!formData.email.trim()) return 'Email wajib diisi.';
     if (!formData.phone_wa.trim()) return 'Nomor WhatsApp wajib diisi.';
-    if (!formData.major) return 'Program studi wajib dipilih.';
     if (!formData.cohort) return 'Angkatan wajib dipilih.';
     if (!formData.choice_div_1) return 'Divisi utama (Pilihan 1) wajib dipilih.';
     if (!formData.motivation.trim()) return 'Motivasi wajib diisi.';
@@ -211,7 +199,7 @@ export default function OprecPage() {
         nim: formData.nim.trim(),
         email: formData.email.trim(),
         phone_wa: formData.phone_wa.trim(),
-        major: formData.major,
+        major: 'Teknologi Informasi',
         cohort: formData.cohort,
         choice_div_1: formData.choice_div_1.startsWith('fallback') ? null : formData.choice_div_1,
         choice_div_2:
@@ -221,13 +209,13 @@ export default function OprecPage() {
         motivation: formData.motivation.trim(),
       };
 
-      const { data, error } = await supabase.from('applicants').insert(payload).select().single();
+      const { error } = await supabase.from('applicants').insert(payload);
 
       if (error) throw error;
 
       setSubmittedApplicant({
-        ...data,
-        // simpan nama divisi untuk ditampilkan di PDF (karena kita hanya punya UUID)
+        ...payload,
+        // simpan nama divisi untuk ditampilkan di PDF
         divisionNames: {
           choice1: divisions.find((d) => d.id === formData.choice_div_1)?.name,
           choice2: divisions.find((d) => d.id === formData.choice_div_2)?.name,
@@ -432,48 +420,25 @@ export default function OprecPage() {
             />
           </div>
 
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Program Studi <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  name="major"
-                  value={formData.major}
-                  onChange={handleChange}
-                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
-                >
-                  <option value="">Pilih Prodi</option>
-                  {MAJORS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Angkatan <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  name="cohort"
-                  value={formData.cohort}
-                  onChange={handleChange}
-                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
-                >
-                  <option value="">Pilih Angkatan</option>
-                  {COHORTS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              </div>
+          <div className="mb-6">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Angkatan <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                name="cohort"
+                value={formData.cohort}
+                onChange={handleChange}
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
+              >
+                <option value="">Pilih Angkatan</option>
+                {COHORTS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
 

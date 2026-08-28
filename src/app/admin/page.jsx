@@ -248,6 +248,21 @@ function PendaftarTab({ session }) {
     }
   }
 
+  async function handleDeleteApplicant(applicant) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus pendaftar "${applicant.full_name}"?`)) return;
+    const res = await authFetch(session, '/api/admin/applicants', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: applicant.id }),
+    });
+    if (res.ok) {
+      fetchApplicants();
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Gagal menghapus pendaftar.');
+    }
+  }
+
   async function handleExportCsv() {
     // Load papaparse hanya saat tombol ini benar-benar diklik,
     // jadi library-nya tidak ikut memberatkan initial load dashboard.
@@ -398,6 +413,13 @@ function PendaftarTab({ session }) {
                         )}
                         Jadikan Pengurus
                       </button>
+                      <button
+                        onClick={() => handleDeleteApplicant(a)}
+                        className="rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100"
+                        title="Hapus Pendaftar"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -526,12 +548,34 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       setUploading(true);
       const uploadedUrls = [];
       for (const file of photos) {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('folder', 'projects');
-        const res = await authFetch(session, '/api/admin/upload', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (res.ok) uploadedUrls.push(data.url);
+        try {
+          const ext = file.name.split('.').pop();
+          const fileName = `projects/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('himpunan-media')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false,
+            });
+            
+          if (uploadError) {
+            console.error('Error uploading file:', file.name, uploadError.message);
+            alert(`Gagal mengunggah ${file.name}: ${uploadError.message}`);
+            continue;
+          }
+          
+          const { data: publicUrlData } = supabase.storage
+            .from('himpunan-media')
+            .getPublicUrl(fileName);
+            
+          if (publicUrlData?.publicUrl) {
+            uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        } catch (err) {
+          console.error('Error uploading file:', file.name, err);
+          alert(`Gagal mengunggah ${file.name}`);
+        }
       }
       setUploading(false);
 
@@ -865,12 +909,39 @@ function PengurusAddForm({ session, editingOfficer, setEditingOfficer, onAdded }
       let photo_url = editingOfficer ? editingOfficer.photo_url : null;
       if (photo) {
         setUploading(true);
-        const fd = new FormData();
-        fd.append('file', photo);
-        fd.append('folder', 'officers');
-        const res = await authFetch(session, '/api/admin/upload', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (res.ok) photo_url = data.url;
+        try {
+          const ext = photo.name.split('.').pop();
+          const fileName = `officers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('himpunan-media')
+            .upload(fileName, photo, {
+              cacheControl: '3600',
+              upsert: false,
+            });
+            
+          if (uploadError) {
+            console.error('Error uploading photo:', uploadError.message);
+            alert(`Gagal mengunggah foto: ${uploadError.message}`);
+            setUploading(false);
+            setSaving(false);
+            return;
+          }
+          
+          const { data: publicUrlData } = supabase.storage
+            .from('himpunan-media')
+            .getPublicUrl(fileName);
+            
+          if (publicUrlData?.publicUrl) {
+            photo_url = publicUrlData.publicUrl;
+          }
+        } catch (err) {
+          console.error('Error uploading photo:', err);
+          alert('Gagal mengunggah foto.');
+          setUploading(false);
+          setSaving(false);
+          return;
+        }
         setUploading(false);
       }
 

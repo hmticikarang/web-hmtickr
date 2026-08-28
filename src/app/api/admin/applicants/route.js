@@ -67,3 +67,32 @@ export async function PATCH(request) {
 
   return NextResponse.json({ applicant: data });
 }
+
+export async function DELETE(request) {
+  const admin = await verifyAdminSession(request);
+  if (!admin) {
+    return NextResponse.json({ error: 'Sesi admin tidak valid.' }, { status: 401 });
+  }
+
+  try {
+    const { id } = await request.json();
+    if (!id) {
+      return NextResponse.json({ error: 'ID pendaftar wajib disertakan.' }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from('applicants')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Delete applicant error:', err);
+    return NextResponse.json({ error: 'Gagal menghapus pendaftar.' }, { status: 500 });
+  }
+}
+

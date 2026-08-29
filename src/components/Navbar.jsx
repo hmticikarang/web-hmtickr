@@ -85,31 +85,35 @@ export default function Navbar() {
       }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        {/* Logo Section */}
+        {/* Logo + Brand */}
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100">
-              <Image
-                src="/logo-kampus.png"
-                alt="Logo Kampus"
-                fill
-                sizes="40px"
-                className="object-contain p-1"
-              />
-            </div>
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100">
-              <Image
-                src="/logo-himpunan.png"
-                alt="Logo Himpunan"
-                fill
-                sizes="40px"
-                className="object-contain p-1"
-              />
-            </div>
-          </div>
+          {/* Logo BSI — gunakan width/height eksplisit, bukan fill, agar tidak blur */}
+          <Image
+            src="/logo-bsi.png"
+            alt="Logo Universitas BSI"
+            width={36}
+            height={36}
+            quality={100}
+            className="shrink-0 rounded-md"
+          />
+
+          {/* Vertical Divider */}
+          <div className="h-7 w-px bg-slate-200" />
+
+          {/* Logo HMTI */}
+          <Image
+            src="/logo-hmti.png"
+            alt="Logo HMTI"
+            width={36}
+            height={36}
+            quality={100}
+            className="shrink-0 rounded-full"
+          />
+
+          {/* Brand Text */}
           <div className="hidden flex-col leading-tight sm:flex">
-            <span className="text-sm font-bold text-[#0F172A]">Himpunan Mahasiswa</span>
-            <span className="text-xs text-slate-500">Program Studi</span>
+            <span className="text-sm font-bold text-[#0F172A]">HMTI Cikarang</span>
+            <span className="text-[11px] text-slate-400">Universitas BSI</span>
           </div>
         </Link>
 

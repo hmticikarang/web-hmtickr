@@ -78,6 +78,29 @@ export default async function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
           <div className="mx-auto max-w-3xl text-center">
+            {/* Logo BSI & HMTI */}
+            <div className="mb-8 flex items-center justify-center gap-6">
+              <div className="transition-transform duration-300 hover:scale-105">
+                <Image
+                  src="/logo-bsi.png"
+                  alt="Logo Universitas Bina Sarana Informatika"
+                  width={90}
+                  height={90}
+                  className="drop-shadow-[0_0_12px_rgba(255,255,255,0.25)]"
+                />
+              </div>
+              <div className="h-12 w-px bg-white/20" />
+              <div className="transition-transform duration-300 hover:scale-105">
+                <Image
+                  src="/logo-hmti.png"
+                  alt="Logo HMTI Universitas BSI"
+                  width={90}
+                  height={90}
+                  className="drop-shadow-[0_0_12px_rgba(255,255,255,0.25)]"
+                />
+              </div>
+            </div>
+
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Himpunan Mahasiswa
               <span className="block text-slate-300">Teknologi Informasi Cikarang</span>

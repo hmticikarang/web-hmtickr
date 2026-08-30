@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Sparkles, Users, FolderKanban } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { InteractiveHoverButton } from '../components/ui/InteractiveHoverButton';
 
 // ISR: cache 60 detik. Beranda tidak perlu di-generate ulang di setiap
 // request karena proker terbaru & status oprec tidak berubah tiap detik.
@@ -89,20 +90,15 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/proker"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] shadow-lg transition-transform hover:scale-[1.02] sm:w-auto"
-              >
-                Jelajahi Proker
-                <FolderKanban className="h-4 w-4" />
+              <Link href="/proker">
+                <InteractiveHoverButton
+                  text="Jelajahi Proker"
+                  className="border-white bg-white text-[#0F172A] shadow-lg"
+                />
               </Link>
               {oprecOpen && (
-                <Link
-                  href="/oprec"
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-transparent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:w-auto"
-                >
-                  Daftar Open Recruitment
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <Link href="/oprec">
+                  <InteractiveHoverButton text="Daftar Open Recruitment" />
                 </Link>
               )}
             </div>
@@ -222,12 +218,11 @@ export default async function HomePage() {
               </p>
             </div>
           </div>
-          <Link
-            href="/tentang"
-            className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#0F172A] transition-transform hover:scale-[1.02] sm:w-auto"
-          >
-            Tentang Kami
-            <ArrowRight className="h-4 w-4" />
+          <Link href="/tentang">
+            <InteractiveHoverButton
+              text="Tentang Kami"
+              className="border-white bg-white text-[#0F172A]"
+            />
           </Link>
         </div>
       </section>

@@ -106,8 +106,7 @@ export default async function HomePage() {
               <span className="block text-slate-300">Teknologi Informasi Cikarang</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua ut enim ad minim veniam.
+              Website resmi Himpunan Mahasiswa Teknologi Informasi (HMTI) Universitas Bina Sarana Informatika Cikarang sebagai pusat informasi organisasi, kegiatan, program kerja, dan aspirasi mahasiswa.
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">

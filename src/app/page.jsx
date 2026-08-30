@@ -79,12 +79,6 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
           <div className="mx-auto max-w-3xl text-center">
             {/* Pill Badge */}
-            <div className="mb-6 flex justify-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-medium tracking-wide text-slate-300 backdrop-blur-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                Organisasi Kemahasiswaan Resmi · Periode 2025/2026
-              </span>
-            </div>
 
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Himpunan Mahasiswa

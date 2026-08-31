@@ -344,6 +344,7 @@ function PendaftarTab({ session }) {
               <th className="px-4 py-3">Interview</th>
               <th className="px-4 py-3 text-right">Aksi</th>
             </tr>
+
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading ? (
@@ -551,24 +552,24 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
         try {
           const ext = file.name.split('.').pop();
           const fileName = `projects/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-          
+
           const { error: uploadError } = await supabase.storage
             .from('himpunan-media')
             .upload(fileName, file, {
               cacheControl: '3600',
               upsert: false,
             });
-            
+
           if (uploadError) {
             console.error('Error uploading file:', file.name, uploadError.message);
             alert(`Gagal mengunggah ${file.name}: ${uploadError.message}`);
             continue;
           }
-          
+
           const { data: publicUrlData } = supabase.storage
             .from('himpunan-media')
             .getPublicUrl(fileName);
-            
+
           if (publicUrlData?.publicUrl) {
             uploadedUrls.push(publicUrlData.publicUrl);
           }
@@ -912,14 +913,14 @@ function PengurusAddForm({ session, editingOfficer, setEditingOfficer, onAdded }
         try {
           const ext = photo.name.split('.').pop();
           const fileName = `officers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-          
+
           const { error: uploadError } = await supabase.storage
             .from('himpunan-media')
             .upload(fileName, photo, {
               cacheControl: '3600',
               upsert: false,
             });
-            
+
           if (uploadError) {
             console.error('Error uploading photo:', uploadError.message);
             alert(`Gagal mengunggah foto: ${uploadError.message}`);
@@ -927,11 +928,11 @@ function PengurusAddForm({ session, editingOfficer, setEditingOfficer, onAdded }
             setSaving(false);
             return;
           }
-          
+
           const { data: publicUrlData } = supabase.storage
             .from('himpunan-media')
             .getPublicUrl(fileName);
-            
+
           if (publicUrlData?.publicUrl) {
             photo_url = publicUrlData.publicUrl;
           }

@@ -30,7 +30,7 @@ export default function Footer() {
                   className="object-contain p-1.5"
                 />
               </div>
-              <span className="text-base font-bold text-white">Himpunan Mahasiswa</span>
+              <span className="text-base font-bold text-white">HMTI Cikarang</span>
             </div>
             <p className="text-sm leading-relaxed text-slate-400">
               Menjadi organisasi mahasiswa Teknologi Informasi yang unggul, inovatif, dan

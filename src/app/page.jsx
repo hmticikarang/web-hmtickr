@@ -14,21 +14,21 @@ const FALLBACK_PROJECTS = [
     id: 'dummy-1',
     title: 'Seminar Nasional Kepemimpinan',
     division_name: 'BPH',
-    background: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.',
+    background: 'Seminar nasional yang menghadirkan para pemimpin inspiratif untuk berbagi pengalaman kepada mahasiswa Teknologi Informasi Cikarang.',
     photos_urls: [],
   },
   {
     id: 'dummy-2',
     title: 'Pelatihan Desain & Media Kreatif',
     division_name: 'KOMINFO',
-    background: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.',
+    background: 'Program pelatihan intensif di bidang desain grafis dan media kreatif untuk memperkuat kapasitas mahasiswa dalam komunikasi visual.',
     photos_urls: [],
   },
   {
     id: 'dummy-3',
     title: 'Riset Kepuasan Mahasiswa',
     division_name: 'LITBANG',
-    background: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+    background: 'Riset mendalam tentang kepuasan mahasiswa terhadap layanan akademik dan organisasi untuk mendorong perbaikan yang berkelanjutan.',
     photos_urls: [],
   },
 ];
@@ -128,13 +128,14 @@ export default async function HomePage() {
               "Mari tumbuh bersama, berkarya untuk sesama."
             </h2>
             <p className="mt-5 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-              exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+              Assalamu'alaikum dan salam sejahtera untuk seluruh mahasiswa Teknologi Informasi Cikarang.
+              Kami hadir untuk memfasilitasi pengembangan diri, menyalurkan aspirasi, dan menciptakan
+              ruang kolaborasi yang positif bagi seluruh anggota himpunan.
             </p>
             <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-              fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.
+              Bersama HMTI, mari kita wujudkan mahasiswa yang unggul dalam ilmu, kuat dalam karakter,
+              dan berdampak nyata bagi lingkungan sekitar. Jadikan masa kuliah sebagai momentum terbaik
+              untuk bertumbuh bersama.
             </p>
             <div className="mt-6">
               <p className="text-sm font-semibold text-[#0F172A]">Nama Ketua Himpunan</p>
@@ -214,7 +215,7 @@ export default async function HomePage() {
                 Ingin tahu lebih jauh tentang kami?
               </h3>
               <p className="mt-1 text-sm text-slate-300">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor.
+                Kenali visi, misi, dan struktur organisasi kami untuk memahami lebih dalam semangat yang menggerakkan HMTI Cikarang.
               </p>
             </div>
           </div>

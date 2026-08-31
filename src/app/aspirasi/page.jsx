@@ -63,8 +63,8 @@ export default function AspirasiPage() {
           </span>
           <h1 className="mt-3 text-3xl font-extrabold text-white sm:text-4xl">Forum Aspirasi</h1>
           <p className="mx-auto mt-4 max-w-xl text-sm text-slate-300 sm:text-base">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua.
+            Sampaikan kritik, saran, dan masukan kamu untuk HMTI Cikarang. Suaramu penting
+            untuk membangun organisasi yang lebih baik bagi seluruh mahasiswa.
           </p>
         </div>
       </section>

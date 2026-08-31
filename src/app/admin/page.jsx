@@ -494,20 +494,14 @@ function ProkerCmsForm({ session }) {
 }
 
 function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
-  const [divisions, setDivisions] = useState([]);
-  const [form, setForm] = useState({ title: '', background: '', achievements: '', division_id: '' });
+  const [form, setForm] = useState({ title: '', background: '', achievements: '' });
   const [existingPhotos, setExistingPhotos] = useState([]); // array of URLs
   const [photos, setPhotos] = useState([]); // array of File
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
-  useEffect(() => {
-    supabase
-      .from('divisions')
-      .select('id, name')
-      .then(({ data }) => setDivisions(data || []));
-  }, []);
+
 
   useEffect(() => {
     if (editingProker) {
@@ -515,13 +509,12 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
         title: editingProker.title || '',
         background: editingProker.background || '',
         achievements: editingProker.achievements || '',
-        division_id: editingProker.division_id || '',
       });
       setExistingPhotos(editingProker.photos_urls || []);
       setPhotos([]);
       setSuccessMsg('');
     } else {
-      setForm({ title: '', background: '', achievements: '', division_id: '' });
+      setForm({ title: '', background: '', achievements: '' });
       setExistingPhotos([]);
       setPhotos([]);
     }
@@ -595,7 +588,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       if (res.ok) {
         setSuccessMsg(isEdit ? 'Proker berhasil diperbarui!' : 'Proker berhasil ditambahkan!');
         if (!isEdit) {
-          setForm({ title: '', background: '', achievements: '', division_id: '' });
+          setForm({ title: '', background: '', achievements: '' });
           setPhotos([]);
         } else {
           setEditingProker(null);
@@ -632,22 +625,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
         />
       </div>
 
-      <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">Divisi Penanggung Jawab</label>
-        <select
-          name="division_id"
-          value={form.division_id}
-          onChange={handleChange}
-          className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
-        >
-          <option value="">Pilih Divisi</option>
-          {divisions.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-      </div>
+
 
       <div className="mb-4">
         <label className="mb-1.5 block text-sm font-medium text-slate-700">Latar Belakang</label>

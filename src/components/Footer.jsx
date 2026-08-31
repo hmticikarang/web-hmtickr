@@ -23,7 +23,7 @@ export default function Footer() {
             <div className="mb-4 flex items-center gap-3">
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-white/10">
                 <Image
-                  src="/logo-himpunan.png"
+                  src="/logo-hmti.png"
                   alt="Logo Himpunan"
                   fill
                   sizes="48px"

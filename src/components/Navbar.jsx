@@ -125,10 +125,10 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 active:scale-95 ${
                   active
-                    ? 'bg-[#0F172A]/5 text-[#0F172A]'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-[#0F172A]'
+                    ? 'bg-[#0F172A]/10 text-[#0F172A] shadow-sm'
+                    : 'text-slate-600 hover:bg-[#0F172A]/8 hover:text-[#0F172A] hover:shadow-sm'
                 }`}
               >
                 {link.label}
@@ -173,10 +173,10 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                className={`relative px-4 py-3 rounded-full text-sm font-medium transition-all duration-300 active:scale-95 ${
                   active
-                    ? 'bg-[#0F172A]/5 text-[#0F172A]'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-[#0F172A]'
+                    ? 'bg-[#0F172A]/10 text-[#0F172A] shadow-sm'
+                    : 'text-slate-600 hover:bg-[#0F172A]/8 hover:text-[#0F172A] hover:shadow-sm'
                 }`}
               >
                 {link.label}

@@ -159,9 +159,9 @@ export default async function HomePage() {
       </section>
 
       {/* PROKER UNGGULAN */}
-      <section className="bg-white py-16 lg:py-24">
+      <section className="bg-white py-10 lg:py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <span className="text-xs font-semibold uppercase tracking-wider text-[#1E3A8A]">
                 Program Kerja
@@ -184,7 +184,7 @@ export default async function HomePage() {
               <Link
                 key={proker.id}
                 href={`/proker/${proker.id}`}
-                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl"
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                   {proker.photos_urls?.[0] ? (
@@ -193,7 +193,7 @@ export default async function HomePage() {
                       alt={proker.title}
                       fill
                       sizes="(max-width: 640px) 100vw, 400px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
@@ -205,7 +205,7 @@ export default async function HomePage() {
                   <span className="inline-block rounded-full bg-[#1E3A8A]/10 px-3 py-1 text-xs font-semibold text-[#1E3A8A]">
                     {proker.division_name}
                   </span>
-                  <h3 className="mt-3 text-base font-bold text-[#0F172A] group-hover:text-[#1E3A8A]">
+                  <h3 className="mt-3 text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">
                     {proker.title}
                   </h3>
                   <p className="mt-2 line-clamp-2 text-sm text-slate-500">{proker.background}</p>
@@ -217,9 +217,9 @@ export default async function HomePage() {
       </section>
 
       {/* GALERI KEGIATAN */}
-      <section className="bg-slate-50/50 border-t border-slate-100 py-16 lg:py-24">
+      <section className="bg-slate-50/50 border-t border-slate-100 py-10 lg:py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#1E3A8A]">
                 <Folder className="h-3.5 w-3.5" />
@@ -246,7 +246,7 @@ export default async function HomePage() {
               <Link
                 key={activity.id}
                 href={`/kegiatan/${activity.id}`}
-                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl"
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                   {activity.photos_urls?.[0] ? (
@@ -255,7 +255,7 @@ export default async function HomePage() {
                       alt={activity.title}
                       fill
                       sizes="(max-width: 640px) 100vw, 400px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
@@ -270,13 +270,13 @@ export default async function HomePage() {
                       {formatDate(activity.event_date)}
                     </span>
                   )}
-                  <h3 className="text-base font-bold text-[#0F172A] group-hover:text-[#1E3A8A] transition-colors">
+                  <h3 className="text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">
                     {activity.title}
                   </h3>
                   <p className="mt-2 line-clamp-2 text-sm text-slate-500">{activity.description}</p>
                   <span className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#1E3A8A]">
                     Lihat Detail
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1" />
                   </span>
                 </div>
               </Link>

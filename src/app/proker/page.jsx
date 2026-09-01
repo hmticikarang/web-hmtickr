@@ -88,7 +88,7 @@ export default async function ProkerPage() {
               <Link
                 key={proker.id}
                 href={`/proker/${proker.id}`}
-                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl"
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                   {proker.photos_urls?.[0] ? (
@@ -97,7 +97,7 @@ export default async function ProkerPage() {
                       alt={proker.title}
                       fill
                       sizes="(max-width: 640px) 100vw, 400px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
@@ -109,13 +109,13 @@ export default async function ProkerPage() {
                   <span className="inline-block rounded-full bg-[#1E3A8A]/10 px-3 py-1 text-xs font-semibold text-[#1E3A8A]">
                     {proker.division_name}
                   </span>
-                  <h3 className="mt-3 text-base font-bold text-[#0F172A] group-hover:text-[#1E3A8A]">
+                  <h3 className="mt-3 text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">
                     {proker.title}
                   </h3>
                   <p className="mt-2 line-clamp-2 text-sm text-slate-500">{proker.background}</p>
                   <span className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#1E3A8A]">
                     Lihat Detail
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1" />
                   </span>
                 </div>
               </Link>

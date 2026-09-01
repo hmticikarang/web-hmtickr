@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { InteractiveHoverButton } from './ui/InteractiveHoverButton';
 
 const NAV_LINKS = [
   { href: '/', label: 'Beranda' },
@@ -123,16 +124,16 @@ export default function Navbar() {
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href;
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 active:scale-95 ${
-                  active
-                    ? 'bg-[#0F172A]/10 text-[#0F172A] shadow-sm'
-                    : 'text-slate-600 hover:bg-[#0F172A]/8 hover:text-[#0F172A] hover:shadow-sm'
-                }`}
-              >
-                {link.label}
+              <Link key={link.href} href={link.href}>
+                <InteractiveHoverButton
+                  text={link.label}
+                  showIcon={false}
+                  className={`h-auto min-h-0 min-w-0 px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${
+                    active
+                      ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-sm'
+                      : 'border-transparent bg-transparent text-slate-600 hover:border-[#0F172A]'
+                  }`}
+                />
               </Link>
             );
           })}
@@ -141,12 +142,12 @@ export default function Navbar() {
         {/* CTA Button (Desktop) */}
         <div className="hidden lg:block">
           {oprecOpen && (
-            <Link
-              href="/oprec"
-              className="group flex items-center gap-2 rounded-xl bg-[#0F172A] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#0F172A]/20 transition-all hover:bg-[#1E3A8A] hover:shadow-lg hover:shadow-[#1E3A8A]/30"
-            >
-              Open Recruitment
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            <Link href="/oprec">
+              <InteractiveHoverButton
+                text="Open Recruitment"
+                showIcon={true}
+                className="h-auto min-h-0 min-w-0 border-[#0F172A] bg-[#0F172A] px-3.5 py-1.5 text-xs font-semibold text-white shadow-md"
+              />
             </Link>
           )}
         </div>
@@ -167,31 +168,31 @@ export default function Navbar() {
           isOpen ? 'max-h-96 border-t border-slate-100' : 'max-h-0'
         }`}
       >
-        <div className="flex flex-col gap-1 px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-1.5 px-4 py-4 sm:px-6">
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href;
             return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`relative px-4 py-3 rounded-full text-sm font-medium transition-all duration-300 active:scale-95 ${
-                  active
-                    ? 'bg-[#0F172A]/10 text-[#0F172A] shadow-sm'
-                    : 'text-slate-600 hover:bg-[#0F172A]/8 hover:text-[#0F172A] hover:shadow-sm'
-                }`}
-              >
-                {link.label}
+              <Link key={link.href} href={link.href} className="w-full">
+                <InteractiveHoverButton
+                  text={link.label}
+                  showIcon={false}
+                  className={`h-auto min-h-0 w-full min-w-0 justify-center px-4 py-2 text-xs font-medium ${
+                    active
+                      ? 'border-[#0F172A] bg-[#0F172A] text-white shadow-sm'
+                      : 'border-transparent bg-slate-50 text-slate-600 hover:border-[#0F172A]'
+                  }`}
+                />
               </Link>
             );
           })}
 
           {oprecOpen && (
-            <Link
-              href="/oprec"
-              className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-[#0F172A] px-5 py-3 text-sm font-semibold text-white shadow-md"
-            >
-              Open Recruitment
-              <ArrowRight className="h-4 w-4" />
+            <Link href="/oprec" className="mt-1 w-full">
+              <InteractiveHoverButton
+                text="Open Recruitment"
+                showIcon={true}
+                className="h-auto min-h-0 w-full min-w-0 justify-center border-[#0F172A] bg-[#0F172A] px-4 py-2.5 text-xs font-semibold text-white shadow-md"
+              />
             </Link>
           )}
         </div>

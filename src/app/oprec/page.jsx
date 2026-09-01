@@ -158,7 +158,6 @@ export default function OprecPage() {
   function validateForm() {
     if (!formData.full_name.trim()) return 'Nama lengkap wajib diisi.';
     if (!formData.nim.trim()) return 'NIM wajib diisi.';
-    if (!formData.email.trim()) return 'Email wajib diisi.';
     if (!formData.phone_wa.trim()) return 'Nomor WhatsApp wajib diisi.';
     if (!formData.cohort) return 'Angkatan wajib dipilih.';
     if (!formData.choice_div_1) return 'Divisi utama (Pilihan 1) wajib dipilih.';
@@ -197,7 +196,7 @@ export default function OprecPage() {
         app_number,
         full_name: formData.full_name.trim(),
         nim: formData.nim.trim(),
-        email: formData.email.trim(),
+        email: formData.email ? formData.email.trim() : '-',
         phone_wa: formData.phone_wa.trim(),
         major: 'Teknologi Informasi',
         cohort: formData.cohort,
@@ -404,20 +403,6 @@ export default function OprecPage() {
                 className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
               />
             </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Email <span className="text-red-500">*</span>
-            </label>
-            <input
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="nama@email.com"
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
-            />
           </div>
 
           <div className="mb-6">

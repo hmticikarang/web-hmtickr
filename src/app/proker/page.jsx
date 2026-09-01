@@ -72,8 +72,8 @@ export default async function ProkerPage() {
           </span>
           <h1 className="mt-3 text-3xl font-extrabold text-white sm:text-4xl">Program Kerja</h1>
           <p className="mx-auto mt-4 max-w-xl text-sm text-slate-300 sm:text-base">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua.
+            Temukan berbagai program kerja unggulan yang dirancang HMTI Cikarang untuk
+            meningkatkan kompetensi, kreativitas, dan semangat kolaborasi antar mahasiswa Teknologi Informasi.
           </p>
         </div>
       </section>

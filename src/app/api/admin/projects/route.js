@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { supabaseAdmin, verifyAdminSession } from '@/lib/supabaseAdmin';
+import { supabaseAdmin, verifyAdminSession, deleteStorageFilesFromUrls } from '@/lib/supabaseAdmin';
 
 export async function GET(request) {
   const admin = await verifyAdminSession(request);
@@ -78,6 +78,22 @@ export async function PUT(request) {
     );
   }
 
+  // Hapus foto lama yang dihilangkan saat edit dari Supabase Storage
+  const { data: oldProject } = await supabaseAdmin
+    .from('projects')
+    .select('photos_urls')
+    .eq('id', id)
+    .single();
+
+  if (oldProject?.photos_urls) {
+    const removedPhotos = oldProject.photos_urls.filter(
+      (url) => !(photos_urls || []).includes(url)
+    );
+    if (removedPhotos.length > 0) {
+      await deleteStorageFilesFromUrls(removedPhotos);
+    }
+  }
+
   const { data, error } = await supabaseAdmin
     .from('projects')
     .update({
@@ -113,6 +129,19 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'ID proker wajib disertakan.' }, { status: 400 });
   }
 
+  // 1. Ambil data proker untuk mendapatkan photos_urls
+  const { data: project } = await supabaseAdmin
+    .from('projects')
+    .select('photos_urls')
+    .eq('id', id)
+    .single();
+
+  // 2. Hapus file foto dari Supabase Storage (himpunan-media) jika ada
+  if (project?.photos_urls && project.photos_urls.length > 0) {
+    await deleteStorageFilesFromUrls(project.photos_urls);
+  }
+
+  // 3. Hapus baris data proker di database
   const { error } = await supabaseAdmin.from('projects').delete().eq('id', id);
 
   if (error) {

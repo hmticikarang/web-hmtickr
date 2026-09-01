@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Sparkles, Users, FolderKanban } from 'lucide-react';
+import { ArrowRight, Sparkles, Users, FolderKanban, Folder, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { InteractiveHoverButton } from '../components/ui/InteractiveHoverButton';
 
@@ -60,8 +60,60 @@ async function getLatestProjects() {
   }));
 }
 
+// Fallback dummy data kegiatan
+const FALLBACK_ACTIVITIES = [
+  {
+    id: 'act-1',
+    title: 'Bagi-Bagi Takjil Ramadhan',
+    description:
+      'HMTI Cikarang membagikan ratusan paket takjil kepada masyarakat sekitar kampus sebagai wujud kepedulian di bulan suci Ramadhan.',
+    event_date: '2025-03-15',
+    photos_urls: [],
+  },
+  {
+    id: 'act-2',
+    title: 'Buka Bersama Keluarga Besar HMTI',
+    description:
+      'Acara buka puasa bersama seluruh anggota, alumni, dan keluarga besar HMTI Cikarang untuk mempererat tali silaturahmi.',
+    event_date: '2025-03-20',
+    photos_urls: [],
+  },
+  {
+    id: 'act-3',
+    title: 'Penggalangan Dana untuk NTT',
+    description:
+      'HMTI Cikarang menggalang dana dan menyalurkan bantuan kepada korban bencana di Nusa Tenggara Timur.',
+    event_date: '2025-04-05',
+    photos_urls: [],
+  },
+];
+
+async function getLatestActivities() {
+  const { data, error } = await supabase
+    .from('activities')
+    .select('id, title, description, event_date, photos_urls')
+    .order('event_date', { ascending: false })
+    .limit(3);
+
+  if (error || !data || data.length === 0) return FALLBACK_ACTIVITIES;
+  return data;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 export default async function HomePage() {
-  const [oprecOpen, projects] = await Promise.all([getOprecStatus(), getLatestProjects()]);
+  const [oprecOpen, projects, activities] = await Promise.all([
+    getOprecStatus(),
+    getLatestProjects(),
+    getLatestActivities(),
+  ]);
 
   return (
     <div>
@@ -101,45 +153,6 @@ export default async function HomePage() {
                   <InteractiveHoverButton text="Daftar Open Recruitment" />
                 </Link>
               )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SAMBUTAN KETUA */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-5 lg:gap-16">
-          <div className="lg:col-span-2">
-            <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-2xl bg-slate-100 shadow-lg">
-              <Image
-                src="/ketua-himpunan.jpg"
-                alt="Ketua Himpunan Mahasiswa"
-                fill
-                sizes="(max-width: 1024px) 100vw, 400px"
-                className="object-cover"
-              />
-            </div>
-          </div>
-          <div className="lg:col-span-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#1E3A8A]">
-              Sambutan Ketua Himpunan
-            </span>
-            <h2 className="mt-3 text-2xl font-bold text-[#0F172A] sm:text-3xl">
-              "Mari tumbuh bersama, berkarya untuk sesama."
-            </h2>
-            <p className="mt-5 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Assalamu'alaikum dan salam sejahtera untuk seluruh mahasiswa Teknologi Informasi Cikarang.
-              Kami hadir untuk memfasilitasi pengembangan diri, menyalurkan aspirasi, dan menciptakan
-              ruang kolaborasi yang positif bagi seluruh anggota himpunan.
-            </p>
-            <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Bersama HMTI, mari kita wujudkan mahasiswa yang unggul dalam ilmu, kuat dalam karakter,
-              dan berdampak nyata bagi lingkungan sekitar. Jadikan masa kuliah sebagai momentum terbaik
-              untuk bertumbuh bersama.
-            </p>
-            <div className="mt-6">
-              <p className="text-sm font-semibold text-[#0F172A]">Nama Ketua Himpunan</p>
-              <p className="text-xs text-slate-500">Ketua Umum Periode 2025/2026</p>
             </div>
           </div>
         </div>
@@ -196,6 +209,75 @@ export default async function HomePage() {
                     {proker.title}
                   </h3>
                   <p className="mt-2 line-clamp-2 text-sm text-slate-500">{proker.background}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* GALERI KEGIATAN */}
+      <section className="bg-slate-50/50 border-t border-slate-100 py-16 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#1E3A8A]">
+                <Folder className="h-3.5 w-3.5" />
+                Kegiatan Sosial & Komunitas
+              </span>
+              <h2 className="mt-2 text-2xl font-bold text-[#0F172A] sm:text-3xl">
+                Galeri Kegiatan Terkini
+              </h2>
+              <p className="mt-2 max-w-lg text-sm text-slate-500">
+                Kegiatan sosial dan kemasyarakatan yang kami laksanakan di luar program kerja resmi — wujud nyata kepedulian HMTI Cikarang.
+              </p>
+            </div>
+            <Link
+              href="/kegiatan"
+              className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#1E3A8A] hover:text-[#0F172A]"
+            >
+              Lihat Semua Kegiatan
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {activities.map((activity) => (
+              <Link
+                key={activity.id}
+                href={`/kegiatan/${activity.id}`}
+                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+              >
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                  {activity.photos_urls?.[0] ? (
+                    <Image
+                      src={activity.photos_urls[0]}
+                      alt={activity.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 400px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
+                      <FolderKanban className="h-10 w-10 text-white/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-5">
+                  {activity.event_date && (
+                    <span className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {formatDate(activity.event_date)}
+                    </span>
+                  )}
+                  <h3 className="text-base font-bold text-[#0F172A] group-hover:text-[#1E3A8A] transition-colors">
+                    {activity.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-2 text-sm text-slate-500">{activity.description}</p>
+                  <span className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#1E3A8A]">
+                    Lihat Detail
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </span>
                 </div>
               </Link>
             ))}

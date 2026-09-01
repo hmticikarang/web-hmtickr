@@ -66,6 +66,16 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 6. Table Activities (Kegiatan Non-Proker: baksos, takjil, buka bersama, dll)
+CREATE TABLE IF NOT EXISTS activities (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  event_date DATE,                -- Tanggal pelaksanaan kegiatan (opsional)
+  photos_urls TEXT[],             -- Array URL foto dokumentasi
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 6. Table Aspirations (Aspirasi Mahasiswa)
 CREATE TABLE IF NOT EXISTS aspirations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -105,14 +115,16 @@ ON CONFLICT DO NOTHING;
 ALTER TABLE divisions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE officers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applicants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE aspirations ENABLE ROW LEVEL SECURITY;
 
--- Public bisa baca divisions, officers (yang aktif), projects, settings
+-- Public bisa baca divisions, officers (yang aktif), projects, activities, settings
 CREATE POLICY "Public read divisions" ON divisions FOR SELECT USING (true);
 CREATE POLICY "Public read officers" ON officers FOR SELECT USING (is_active = true);
 CREATE POLICY "Public read projects" ON projects FOR SELECT USING (true);
+CREATE POLICY "Public read activities" ON activities FOR SELECT USING (true);
 CREATE POLICY "Public read settings" ON settings FOR SELECT USING (true);
 
 -- Public (guest, tanpa login) boleh INSERT ke applicants & aspirations

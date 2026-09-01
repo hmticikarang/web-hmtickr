@@ -36,3 +36,44 @@ export async function verifyAdminSession(request) {
   if (error || !data) return null;
   return data;
 }
+
+/**
+ * Ekstrak relative path file dari public URL Supabase Storage.
+ * Contoh URL: https://xxx.supabase.co/storage/v1/object/public/himpunan-media/projects/123.jpg
+ * Output: 'projects/123.jpg'
+ */
+export function getStoragePathFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const marker = '/storage/v1/object/public/himpunan-media/';
+  const index = url.indexOf(marker);
+  if (index !== -1) {
+    return url.substring(index + marker.length);
+  }
+  return null;
+}
+
+/**
+ * Hapus file dari Supabase Storage (bucket 'himpunan-media') berdasarkan URL / list of URL.
+ */
+export async function deleteStorageFilesFromUrls(urls) {
+  if (!urls) return;
+  const urlList = Array.isArray(urls) ? urls : [urls];
+  const filePaths = urlList
+    .map((url) => getStoragePathFromUrl(url))
+    .filter(Boolean);
+
+  if (filePaths.length === 0) return;
+
+  try {
+    const { error } = await supabaseAdmin.storage
+      .from('himpunan-media')
+      .remove(filePaths);
+
+    if (error) {
+      console.error('Error deleting storage files:', error.message);
+    }
+  } catch (err) {
+    console.error('Error executing storage remove:', err);
+  }
+}
+

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { supabaseAdmin, verifyAdminSession } from '@/lib/supabaseAdmin';
+import { supabaseAdmin, verifyAdminSession, deleteStorageFilesFromUrls } from '@/lib/supabaseAdmin';
 
 export async function GET(request) {
   const admin = await verifyAdminSession(request);
@@ -51,8 +51,6 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Halaman publik /struktur di-cache (ISR) — invalidate supaya pengurus baru
-  // langsung muncul tanpa perlu menunggu jeda revalidate otomatis.
   revalidatePath('/struktur');
 
   return NextResponse.json({ officer: data });
@@ -70,6 +68,19 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'ID pengurus wajib disertakan.' }, { status: 400 });
   }
 
+  // 1. Ambil data pengurus untuk mendapatkan photo_url
+  const { data: officer } = await supabaseAdmin
+    .from('officers')
+    .select('photo_url')
+    .eq('id', id)
+    .single();
+
+  // 2. Hapus foto dari Supabase Storage jika ada
+  if (officer?.photo_url) {
+    await deleteStorageFilesFromUrls(officer.photo_url);
+  }
+
+  // 3. Hapus baris data pengurus di database
   const { error } = await supabaseAdmin.from('officers').delete().eq('id', id);
 
   if (error) {
@@ -96,6 +107,19 @@ export async function PUT(request) {
 
   if (!full_name || !position) {
     return NextResponse.json({ error: 'Nama dan jabatan wajib diisi.' }, { status: 400 });
+  }
+
+  // Jika foto diganti, hapus foto lama dari Storage
+  if (photo_url !== undefined) {
+    const { data: oldOfficer } = await supabaseAdmin
+      .from('officers')
+      .select('photo_url')
+      .eq('id', id)
+      .single();
+
+    if (oldOfficer?.photo_url && oldOfficer.photo_url !== photo_url) {
+      await deleteStorageFilesFromUrls(oldOfficer.photo_url);
+    }
   }
 
   const updateData = {

@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: '/tentang', label: 'Tentang Kami' },
   { href: '/struktur', label: 'Struktur Organisasi' },
   { href: '/proker', label: 'Proker' },
+  { href: '/kegiatan', label: 'Kegiatan' },
   { href: '/aspirasi', label: 'Aspirasi' },
 ];
 

@@ -16,6 +16,7 @@ import {
   Trash2,
   User,
   Pencil,
+  Heart,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import LoginForm from '@/components/admin/LoginForm';
@@ -33,6 +34,7 @@ const STATUS_OPTIONS = ['Pending', 'Interview', 'Lolos', 'Tidak Lolos'];
 const TABS = [
   { key: 'pendaftar', label: 'Pendaftar Oprec', icon: Users },
   { key: 'cms', label: 'CMS Proker & Pengurus', icon: FolderKanban },
+  { key: 'kegiatan', label: 'Galeri Kegiatan', icon: Heart },
   { key: 'aspirasi', label: 'Inbox Aspirasi', icon: MessageSquareHeart },
 ];
 
@@ -172,6 +174,7 @@ export default function AdminPage() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {activeTab === 'pendaftar' && <PendaftarTab session={session} />}
         {activeTab === 'cms' && <CmsTab session={session} />}
+        {activeTab === 'kegiatan' && <KegiatanTab session={session} />}
         {activeTab === 'aspirasi' && <AspirasiTab session={session} />}
       </div>
     </div>
@@ -1176,7 +1179,350 @@ function OfficersList({ session, refreshKey, setEditingOfficer, onDeleted }) {
 }
 
 // =====================================================================
-// TAB 3: INBOX ASPIRASI
+// TAB 3: GALERI KEGIATAN (NON-PROKER)
+// =====================================================================
+function KegiatanTab({ session }) {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [editingKegiatan, setEditingKegiatan] = useState(null);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <KegiatanAddForm
+        session={session}
+        editingKegiatan={editingKegiatan}
+        setEditingKegiatan={setEditingKegiatan}
+        onAdded={() => setRefreshKey((k) => k + 1)}
+      />
+      <KegiatanList
+        session={session}
+        refreshKey={refreshKey}
+        setEditingKegiatan={setEditingKegiatan}
+        onDeleted={() => setRefreshKey((k) => k + 1)}
+      />
+    </div>
+  );
+}
+
+function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded }) {
+  const [form, setForm] = useState({ title: '', description: '', event_date: '' });
+  const [existingPhotos, setExistingPhotos] = useState([]);
+  const [photos, setPhotos] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (editingKegiatan) {
+      setForm({
+        title: editingKegiatan.title || '',
+        description: editingKegiatan.description || '',
+        event_date: editingKegiatan.event_date
+          ? editingKegiatan.event_date.slice(0, 10)
+          : '',
+      });
+      setExistingPhotos(editingKegiatan.photos_urls || []);
+      setPhotos([]);
+      setSuccessMsg('');
+    } else {
+      setForm({ title: '', description: '', event_date: '' });
+      setExistingPhotos([]);
+      setPhotos([]);
+    }
+  }, [editingKegiatan]);
+
+  function handleChange(e) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  function handlePhotoSelect(e) {
+    setPhotos(Array.from(e.target.files));
+  }
+
+  function handleRemoveExistingPhoto(urlToRemove) {
+    setExistingPhotos((prev) => prev.filter((url) => url !== urlToRemove));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSaving(true);
+    setSuccessMsg('');
+
+    try {
+      setUploading(true);
+      const uploadedUrls = [];
+      for (const file of photos) {
+        try {
+          const ext = file.name.split('.').pop();
+          const fileName = `activities/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('himpunan-media')
+            .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+          if (uploadError) {
+            alert(`Gagal mengunggah ${file.name}: ${uploadError.message}`);
+            continue;
+          }
+
+          const { data: publicUrlData } = supabase.storage
+            .from('himpunan-media')
+            .getPublicUrl(fileName);
+
+          if (publicUrlData?.publicUrl) {
+            uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        } catch (err) {
+          console.error('Error uploading file:', file.name, err);
+          alert(`Gagal mengunggah ${file.name}`);
+        }
+      }
+      setUploading(false);
+
+      const isEdit = !!editingKegiatan;
+      const url = '/api/admin/activities';
+      const method = isEdit ? 'PUT' : 'POST';
+      const finalPhotosUrls = [...existingPhotos, ...uploadedUrls];
+
+      const res = await authFetch(session, url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          photos_urls: finalPhotosUrls,
+          id: isEdit ? editingKegiatan.id : undefined,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccessMsg(isEdit ? 'Kegiatan berhasil diperbarui!' : 'Kegiatan berhasil ditambahkan!');
+        if (!isEdit) {
+          setForm({ title: '', description: '', event_date: '' });
+          setPhotos([]);
+        } else {
+          setEditingKegiatan(null);
+        }
+        onAdded?.();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Gagal menyimpan data kegiatan.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="h-fit rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="mb-5 flex items-center gap-2 text-base font-bold text-[#0F172A]">
+        {editingKegiatan ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+        {editingKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan Baru'}
+      </h3>
+
+      {successMsg && (
+        <div className="mb-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMsg}</div>
+      )}
+
+      <div className="mb-4">
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Nama Kegiatan</label>
+        <input
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          required
+          placeholder="Contoh: Bagi-Bagi Takjil Ramadhan 2025"
+          className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Tanggal Kegiatan</label>
+        <input
+          type="date"
+          name="event_date"
+          value={form.event_date}
+          onChange={handleChange}
+          className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Deskripsi Kegiatan</label>
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          required
+          rows={4}
+          placeholder="Ceritakan tentang kegiatan ini..."
+          className="w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20"
+        />
+      </div>
+
+      {editingKegiatan && existingPhotos.length > 0 && (
+        <div className="mb-4">
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">Foto Saat Ini</label>
+          <div className="grid grid-cols-4 gap-2">
+            {existingPhotos.map((url, idx) => (
+              <div key={idx} className="relative aspect-video overflow-hidden rounded-lg border border-slate-200 group">
+                <img src={url} alt="Kegiatan" className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveExistingPhoto(url)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/55 text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  Hapus
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-6">
+        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+          <ImageIcon className="h-3.5 w-3.5" />
+          {editingKegiatan ? 'Tambah Foto Baru (Opsional)' : 'Foto Dokumentasi'}
+        </label>
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handlePhotoSelect}
+          className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-[#0F172A] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+        />
+        {photos.length > 0 && (
+          <p className="mt-1.5 text-xs text-slate-500">{photos.length} foto dipilih</p>
+        )}
+      </div>
+
+      <div className="flex gap-3">
+        {editingKegiatan && (
+          <button
+            type="button"
+            onClick={() => setEditingKegiatan(null)}
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Batal
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={saving}
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60 transition-colors"
+        >
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          {uploading ? 'Mengunggah foto...' : saving ? 'Menyimpan...' : editingKegiatan ? 'Update Kegiatan' : 'Simpan Kegiatan'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function KegiatanList({ session, refreshKey, setEditingKegiatan, onDeleted }) {
+  const [kegiatanList, setKegiatanList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    authFetch(session, '/api/admin/activities')
+      .then((res) => res.json())
+      .then((data) => setKegiatanList(data.activities || []))
+      .finally(() => setLoading(false));
+  }, [session, refreshKey]);
+
+  async function handleDelete(kegiatan) {
+    if (!confirm(`Hapus kegiatan "${kegiatan.title}"?`)) return;
+    setDeletingId(kegiatan.id);
+    const res = await authFetch(session, '/api/admin/activities', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: kegiatan.id }),
+    });
+    setDeletingId(null);
+    if (res.ok) {
+      onDeleted?.();
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Gagal menghapus kegiatan.');
+    }
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return null;
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="mb-5 flex items-center gap-2 text-base font-bold text-[#0F172A]">
+        <Heart className="h-4 w-4 text-rose-500" />
+        Daftar Kegiatan ({kegiatanList.length})
+      </h3>
+
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-5 w-5 animate-spin text-rose-500" />
+        </div>
+      ) : kegiatanList.length === 0 ? (
+        <p className="py-6 text-center text-sm text-slate-400">Belum ada kegiatan terdaftar.</p>
+      ) : (
+        <ul className="max-h-[560px] space-y-2 overflow-y-auto">
+          {kegiatanList.map((k) => (
+            <li
+              key={k.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5 hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                  {k.photos_urls?.[0] ? (
+                    <img src={k.photos_urls[0]} alt={k.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-rose-500 to-[#0F172A]">
+                      <Heart className="h-4 w-4 text-white/60" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#0F172A]">{k.title}</p>
+                  <p className="truncate text-xs text-slate-500">
+                    {k.event_date ? formatDate(k.event_date) : 'Tanpa tanggal'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setEditingKegiatan(k)}
+                  className="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-colors"
+                  title="Edit kegiatan"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(k)}
+                  disabled={deletingId === k.id}
+                  className="flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors"
+                  title="Hapus kegiatan"
+                >
+                  {deletingId === k.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// =====================================================================
+// TAB 4: INBOX ASPIRASI
 // =====================================================================
 function AspirasiTab({ session }) {
   const [aspirations, setAspirations] = useState([]);

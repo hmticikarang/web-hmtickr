@@ -88,34 +88,34 @@ export default function Navbar() {
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo + Brand */}
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Logo BSI — gunakan width/height eksplisit, bukan fill, agar tidak blur */}
           <Image
             src="/logo-bsi.png"
             alt="Logo Universitas BSI"
-            width={36}
-            height={36}
+            width={32}
+            height={32}
             quality={100}
-            className="shrink-0 rounded-md"
+            className="shrink-0 rounded-md sm:h-[36px] sm:w-[36px]"
           />
 
           {/* Vertical Divider */}
-          <div className="h-7 w-px bg-slate-200" />
+          <div className="h-6 sm:h-7 w-px bg-slate-200 shrink-0" />
 
           {/* Logo HMTI */}
           <Image
             src="/logo-hmti.png"
             alt="Logo HMTI"
-            width={36}
-            height={36}
+            width={32}
+            height={32}
             quality={100}
-            className="shrink-0 rounded-full"
+            className="shrink-0 rounded-full sm:h-[36px] sm:w-[36px]"
           />
 
           {/* Brand Text */}
-          <div className="hidden flex-col leading-tight sm:flex">
-            <span className="text-sm font-bold text-[#0F172A]">HMTI Cikarang</span>
-            <span className="text-[11px] text-slate-400">Universitas BSI</span>
+          <div className="flex flex-col leading-tight shrink min-w-0">
+            <span className="text-xs sm:text-sm font-bold text-[#0F172A] truncate">HMTI Cikarang</span>
+            <span className="text-[10px] sm:text-[11px] text-slate-400 truncate">Universitas BSI</span>
           </div>
         </Link>
 

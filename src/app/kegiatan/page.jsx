@@ -11,13 +11,25 @@ export const metadata = {
 
 export const revalidate = 300;
 
+function sortByEventDateDesc(list) {
+  if (!list || !Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const timeA = a.event_date ? new Date(a.event_date).getTime() : 0;
+    const timeB = b.event_date ? new Date(b.event_date).getTime() : 0;
+    if (timeA !== timeB) return timeB - timeA;
+    const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return createdB - createdA;
+  });
+}
+
 const FALLBACK_ACTIVITIES = [
   {
-    id: 'dummy-1',
-    title: 'Bagi-Bagi Takjil Ramadhan',
+    id: 'dummy-3',
+    title: 'Penggalangan Dana untuk NTT',
     description:
-      'HMTI Cikarang membagikan ratusan paket takjil kepada masyarakat sekitar kampus sebagai wujud kepedulian di bulan suci Ramadhan.',
-    event_date: '2025-03-15',
+      'HMTI Cikarang menggalang dana dan menyalurkan bantuan kepada korban bencana di Nusa Tenggara Timur.',
+    event_date: '2025-04-05',
     photos_urls: [],
   },
   {
@@ -29,11 +41,11 @@ const FALLBACK_ACTIVITIES = [
     photos_urls: [],
   },
   {
-    id: 'dummy-3',
-    title: 'Penggalangan Dana untuk NTT',
+    id: 'dummy-1',
+    title: 'Bagi-Bagi Takjil Ramadhan',
     description:
-      'HMTI Cikarang menggalang dana dan menyalurkan bantuan kepada korban bencana di Nusa Tenggara Timur.',
-    event_date: '2025-04-05',
+      'HMTI Cikarang membagikan ratusan paket takjil kepada masyarakat sekitar kampus sebagai wujud kepedulian di bulan suci Ramadhan.',
+    event_date: '2025-03-15',
     photos_urls: [],
   },
 ];
@@ -42,10 +54,11 @@ async function getAllActivities() {
   const { data, error } = await supabase
     .from('activities')
     .select('id, title, description, event_date, photos_urls, created_at')
-    .order('event_date', { ascending: false });
+    .order('event_date', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
 
-  if (error || !data || data.length === 0) return FALLBACK_ACTIVITIES;
-  return data;
+  if (error || !data || data.length === 0) return sortByEventDateDesc(FALLBACK_ACTIVITIES);
+  return sortByEventDateDesc(data);
 }
 
 function formatDate(dateStr) {

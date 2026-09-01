@@ -11,7 +11,8 @@ export async function GET(request) {
   const { data, error } = await supabaseAdmin
     .from('activities')
     .select('id, title, description, event_date, photos_urls, created_at')
-    .order('event_date', { ascending: false });
+    .order('event_date', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

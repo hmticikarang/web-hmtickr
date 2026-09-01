@@ -1,43 +1,56 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { FolderKanban, ArrowRight } from 'lucide-react';
+import { FolderKanban, ArrowRight, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
 export const metadata = {
-  title: 'Program Kerja | Himpunan Mahasiswa',
+  title: 'Program Kerja | Himpunan Mahasiswa Teknologi Informasi Cikarang',
+  description: 'Katalog program kerja unggulan HMTI Cikarang yang dilaksanakan secara berkala oleh berbagai divisi.',
 };
 
 // ISR: katalog proker jarang berubah, cache 5 menit agar ringan
 export const revalidate = 300;
 
+function sortByEventDateDesc(list) {
+  if (!list || !Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const timeA = a.event_date ? new Date(a.event_date).getTime() : 0;
+    const timeB = b.event_date ? new Date(b.event_date).getTime() : 0;
+    if (timeA !== timeB) return timeB - timeA;
+    const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return createdB - createdA;
+  });
+}
+
 // Fallback dummy data jika Supabase kosong / belum terkoneksi
 const FALLBACK_PROJECTS = [
   {
-    id: 'dummy-1',
-    title: 'Seminar Nasional Kepemimpinan',
-    division_name: 'BPH',
-    background: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor incididunt.',
-    photos_urls: [],
-  },
-  {
-    id: 'dummy-2',
-    title: 'Pelatihan Desain & Media Kreatif',
-    division_name: 'KOMINFO',
-    background: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.',
+    id: 'dummy-4',
+    title: 'Pelatihan Pengembangan Diri Anggota',
+    description: 'Kegiatan pembekalan soft skill dan pelatihan kepemimpinan internal untuk pengembangan anggota.',
+    event_date: '2025-08-05',
     photos_urls: [],
   },
   {
     id: 'dummy-3',
     title: 'Riset Kepuasan Mahasiswa',
-    division_name: 'LITBANG',
-    background: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat.',
+    description: 'Riset mendalam tentang kepuasan mahasiswa terhadap layanan akademik dan organisasi untuk memperkuat evaluasi himpunan.',
+    event_date: '2025-07-20',
     photos_urls: [],
   },
   {
-    id: 'dummy-4',
-    title: 'Pelatihan Pengembangan Diri Anggota',
-    division_name: 'PSDM',
-    background: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt.',
+    id: 'dummy-2',
+    title: 'Pelatihan Desain & Media Kreatif',
+    description: 'Program pelatihan intensif di bidang desain grafis dan media kreatif untuk memperkuat kapasitas visual mahasiswa.',
+    event_date: '2025-06-15',
+    photos_urls: [],
+  },
+  {
+    id: 'dummy-1',
+    title: 'Seminar Nasional Kepemimpinan',
+    description: 'Seminar nasional yang menghadirkan para pemimpin inspiratif untuk berbagi pengalaman kepada mahasiswa Teknologi Informasi Cikarang.',
+    event_date: '2025-05-10',
     photos_urls: [],
   },
 ];
@@ -45,18 +58,31 @@ const FALLBACK_PROJECTS = [
 async function getAllProjects() {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, background, photos_urls, division_id, created_at, divisions(name)')
+    .select('id, title, description, event_date, background, photos_urls, created_at')
+    .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
-  if (error || !data || data.length === 0) return FALLBACK_PROJECTS;
+  if (error || !data || data.length === 0) return sortByEventDateDesc(FALLBACK_PROJECTS);
 
-  return data.map((p) => ({
+  const mapped = data.map((p) => ({
     id: p.id,
     title: p.title,
-    background: p.background,
+    description: p.description || p.background || '',
+    event_date: p.event_date,
     photos_urls: p.photos_urls || [],
-    division_name: p.divisions?.name || 'Umum',
+    created_at: p.created_at,
   }));
+
+  return sortByEventDateDesc(mapped);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 export default async function ProkerPage() {
@@ -88,32 +114,39 @@ export default async function ProkerPage() {
               <Link
                 key={proker.id}
                 href={`/proker/${proker.id}`}
-                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl"
+                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl flex flex-col justify-between"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                  {proker.photos_urls?.[0] ? (
-                    <Image
-                      src={proker.photos_urls[0]}
-                      alt={proker.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 400px"
-                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
-                      <FolderKanban className="h-10 w-10 text-white/40" />
-                    </div>
-                  )}
+                <div>
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                    {proker.photos_urls?.[0] ? (
+                      <Image
+                        src={proker.photos_urls[0]}
+                        alt={proker.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 400px"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
+                        <FolderKanban className="h-10 w-10 text-white/40" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    {proker.event_date && (
+                      <span className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDate(proker.event_date)}
+                      </span>
+                    )}
+                    <h3 className="mt-2 text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">
+                      {proker.title}
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm text-slate-500">{proker.description}</p>
+                  </div>
                 </div>
-                <div className="p-5">
-                  <span className="inline-block rounded-full bg-[#1E3A8A]/10 px-3 py-1 text-xs font-semibold text-[#1E3A8A]">
-                    {proker.division_name}
-                  </span>
-                  <h3 className="mt-3 text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">
-                    {proker.title}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-sm text-slate-500">{proker.background}</p>
-                  <span className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#1E3A8A]">
+                <div className="px-5 pb-5">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-[#1E3A8A]">
                     Lihat Detail
                     <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:translate-x-1" />
                   </span>

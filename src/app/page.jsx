@@ -8,27 +8,39 @@ import { InteractiveHoverButton } from '../components/ui/InteractiveHoverButton'
 // request karena proker terbaru & status oprec tidak berubah tiap detik.
 export const revalidate = 60;
 
+function sortByEventDateDesc(list) {
+  if (!list || !Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const timeA = a.event_date ? new Date(a.event_date).getTime() : 0;
+    const timeB = b.event_date ? new Date(b.event_date).getTime() : 0;
+    if (timeA !== timeB) return timeB - timeA;
+    const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return createdB - createdA;
+  });
+}
+
 // Fallback dummy data jika Supabase kosong / belum terkoneksi
 const FALLBACK_PROJECTS = [
   {
-    id: 'dummy-1',
-    title: 'Seminar Nasional Kepemimpinan',
-    division_name: 'BPH',
-    background: 'Seminar nasional yang menghadirkan para pemimpin inspiratif untuk berbagi pengalaman kepada mahasiswa Teknologi Informasi Cikarang.',
-    photos_urls: [],
-  },
-  {
-    id: 'dummy-2',
-    title: 'Pelatihan Desain & Media Kreatif',
-    division_name: 'KOMINFO',
-    background: 'Program pelatihan intensif di bidang desain grafis dan media kreatif untuk memperkuat kapasitas mahasiswa dalam komunikasi visual.',
+    id: 'dummy-4',
+    title: 'Pelatihan Pengembangan Diri Anggota',
+    background: 'Kegiatan pembekalan soft skill dan pelatihan kepemimpinan internal untuk pengembangan anggota HMTI.',
+    event_date: '2025-08-05',
     photos_urls: [],
   },
   {
     id: 'dummy-3',
     title: 'Riset Kepuasan Mahasiswa',
-    division_name: 'LITBANG',
     background: 'Riset mendalam tentang kepuasan mahasiswa terhadap layanan akademik dan organisasi untuk mendorong perbaikan yang berkelanjutan.',
+    event_date: '2025-07-20',
+    photos_urls: [],
+  },
+  {
+    id: 'dummy-2',
+    title: 'Pelatihan Desain & Media Kreatif',
+    background: 'Program pelatihan intensif di bidang desain grafis dan media kreatif untuk memperkuat kapasitas mahasiswa dalam komunikasi visual.',
+    event_date: '2025-06-15',
     photos_urls: [],
   },
 ];
@@ -45,29 +57,33 @@ async function getOprecStatus() {
 async function getLatestProjects() {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, background, photos_urls, division_id, divisions(name)')
+    .select('id, title, description, event_date, background, photos_urls, created_at')
+    .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
     .limit(3);
 
-  if (error || !data || data.length === 0) return FALLBACK_PROJECTS;
+  if (error || !data || data.length === 0) return sortByEventDateDesc(FALLBACK_PROJECTS);
 
-  return data.map((p) => ({
+  const mapped = data.map((p) => ({
     id: p.id,
     title: p.title,
-    background: p.background,
+    background: p.description || p.background || '',
+    event_date: p.event_date,
     photos_urls: p.photos_urls || [],
-    division_name: p.divisions?.name || 'Umum',
+    created_at: p.created_at,
   }));
+
+  return sortByEventDateDesc(mapped);
 }
 
 // Fallback dummy data kegiatan
 const FALLBACK_ACTIVITIES = [
   {
-    id: 'act-1',
-    title: 'Bagi-Bagi Takjil Ramadhan',
+    id: 'act-3',
+    title: 'Penggalangan Dana untuk NTT',
     description:
-      'HMTI Cikarang membagikan ratusan paket takjil kepada masyarakat sekitar kampus sebagai wujud kepedulian di bulan suci Ramadhan.',
-    event_date: '2025-03-15',
+      'HMTI Cikarang menggalang dana dan menyalurkan bantuan kepada korban bencana di Nusa Tenggara Timur.',
+    event_date: '2025-04-05',
     photos_urls: [],
   },
   {
@@ -79,11 +95,11 @@ const FALLBACK_ACTIVITIES = [
     photos_urls: [],
   },
   {
-    id: 'act-3',
-    title: 'Penggalangan Dana untuk NTT',
+    id: 'act-1',
+    title: 'Bagi-Bagi Takjil Ramadhan',
     description:
-      'HMTI Cikarang menggalang dana dan menyalurkan bantuan kepada korban bencana di Nusa Tenggara Timur.',
-    event_date: '2025-04-05',
+      'HMTI Cikarang membagikan ratusan paket takjil kepada masyarakat sekitar kampus sebagai wujud kepedulian di bulan suci Ramadhan.',
+    event_date: '2025-03-15',
     photos_urls: [],
   },
 ];
@@ -91,12 +107,13 @@ const FALLBACK_ACTIVITIES = [
 async function getLatestActivities() {
   const { data, error } = await supabase
     .from('activities')
-    .select('id, title, description, event_date, photos_urls')
-    .order('event_date', { ascending: false })
+    .select('id, title, description, event_date, photos_urls, created_at')
+    .order('event_date', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
     .limit(3);
 
-  if (error || !data || data.length === 0) return FALLBACK_ACTIVITIES;
-  return data;
+  if (error || !data || data.length === 0) return sortByEventDateDesc(FALLBACK_ACTIVITIES);
+  return sortByEventDateDesc(data);
 }
 
 function formatDate(dateStr) {
@@ -202,10 +219,13 @@ export default async function HomePage() {
                   )}
                 </div>
                 <div className="p-5">
-                  <span className="inline-block rounded-full bg-[#1E3A8A]/10 px-3 py-1 text-xs font-semibold text-[#1E3A8A]">
-                    {proker.division_name}
-                  </span>
-                  <h3 className="mt-3 text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">
+                  {proker.event_date && (
+                    <span className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {formatDate(proker.event_date)}
+                    </span>
+                  )}
+                  <h3 className="mt-2 text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">
                     {proker.title}
                   </h3>
                   <p className="mt-2 line-clamp-2 text-sm text-slate-500">{proker.background}</p>

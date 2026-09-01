@@ -59,8 +59,10 @@ CREATE TABLE IF NOT EXISTS officers (
 CREATE TABLE IF NOT EXISTS projects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
-  background TEXT NOT NULL,
-  achievements TEXT NOT NULL,
+  description TEXT,
+  event_date DATE,
+  background TEXT,
+  achievements TEXT,
   division_id UUID REFERENCES divisions(id),
   photos_urls TEXT[], -- Array URL foto dari Supabase Storage
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

@@ -497,27 +497,25 @@ function ProkerCmsForm({ session }) {
 }
 
 function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
-  const [form, setForm] = useState({ title: '', background: '', achievements: '' });
+  const [form, setForm] = useState({ title: '', event_date: '', description: '' });
   const [existingPhotos, setExistingPhotos] = useState([]); // array of URLs
   const [photos, setPhotos] = useState([]); // array of File
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
-
-
   useEffect(() => {
     if (editingProker) {
       setForm({
         title: editingProker.title || '',
-        background: editingProker.background || '',
-        achievements: editingProker.achievements || '',
+        event_date: editingProker.event_date ? editingProker.event_date.slice(0, 10) : '',
+        description: editingProker.description || editingProker.background || '',
       });
       setExistingPhotos(editingProker.photos_urls || []);
       setPhotos([]);
       setSuccessMsg('');
     } else {
-      setForm({ title: '', background: '', achievements: '' });
+      setForm({ title: '', event_date: '', description: '' });
       setExistingPhotos([]);
       setPhotos([]);
     }
@@ -591,7 +589,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       if (res.ok) {
         setSuccessMsg(isEdit ? 'Proker berhasil diperbarui!' : 'Proker berhasil ditambahkan!');
         if (!isEdit) {
-          setForm({ title: '', background: '', achievements: '' });
+          setForm({ title: '', event_date: '', description: '' });
           setPhotos([]);
         } else {
           setEditingProker(null);
@@ -618,38 +616,37 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       )}
 
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">Judul Proker</label>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Nama Program Kerja</label>
         <input
           name="title"
           value={form.title}
           onChange={handleChange}
           required
+          placeholder="Contoh: Seminar Nasional Kepemimpinan 2025"
           className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
         />
       </div>
 
-
-
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">Latar Belakang</label>
-        <textarea
-          name="background"
-          value={form.background}
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Tanggal Pelaksanaan</label>
+        <input
+          type="date"
+          name="event_date"
+          value={form.event_date}
           onChange={handleChange}
-          required
-          rows={3}
-          className="w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
+          className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
         />
       </div>
 
       <div className="mb-4">
-        <label className="mb-1.5 block text-sm font-medium text-slate-700">Capaian / Output</label>
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Deskripsi Program Kerja</label>
         <textarea
-          name="achievements"
-          value={form.achievements}
+          name="description"
+          value={form.description}
           onChange={handleChange}
           required
-          rows={3}
+          rows={4}
+          placeholder="Jelaskan mengenai tujuan, latar belakang, dan isi dari program kerja ini..."
           className="w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
         />
       </div>
@@ -777,7 +774,7 @@ function ProkerList({ session, refreshKey, setEditingProker, onDeleted }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-[#0F172A]">{p.title}</p>
                   <p className="truncate text-xs text-slate-500">
-                    {p.divisions?.name || 'Tanpa Divisi'}
+                    {p.event_date ? new Date(p.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Tanggal belum diatur'}
                   </p>
                 </div>
               </div>

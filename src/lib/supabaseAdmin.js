@@ -23,23 +23,66 @@ export const supabaseAdmin = createClient(supabaseUrl || '', serviceRoleKey || '
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
+import crypto from 'crypto';
+
+const SECRET_KEY = process.env.JWT_SECRET || serviceRoleKey || 'hmti-cikarang-secure-admin-secret-2026';
+
+export function createSessionToken(payload) {
+  const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', SECRET_KEY).update(data).digest('base64url');
+  return `${data}.${signature}`;
+}
+
+export function verifySessionToken(token) {
+  if (!token || typeof token !== 'string' || !token.includes('.')) return null;
+  const [data, signature] = token.split('.');
+  if (!data || !signature) return null;
+
+  const expectedSignature = crypto.createHmac('sha256', SECRET_KEY).update(data).digest('base64url');
+
+  const sigBuffer = Buffer.from(signature);
+  const expBuffer = Buffer.from(expectedSignature);
+  if (sigBuffer.length !== expBuffer.length || !crypto.timingSafeEqual(sigBuffer, expBuffer)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString('utf8'));
+    if (payload.exp && Date.now() > payload.exp) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Verifikasi sesi admin sederhana.
- * Client mengirim header 'x-admin-email' setelah login berhasil.
- * Kita re-verifikasi bahwa email tsb benar-benar ada di tabel users dengan role admin.
- * (Simple session, cocok untuk skala organisasi mahasiswa — bukan pengganti auth production-grade.)
+ * Verifikasi sesi admin aman.
+ * Memverifikasi cryptographic token dari HttpOnly Cookie ('admin_session')
+ * atau Authorization header (Bearer token).
  */
 export async function verifyAdminSession(request) {
-  const email = request.headers.get('x-admin-email');
-  if (!email) return null;
+  let token = request.cookies?.get?.('admin_session')?.value;
+  if (!token) {
+    const authHeader = request.headers?.get?.('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    }
+  }
+
+  if (!token) return null;
+
+  const payload = verifySessionToken(token);
+  if (!payload || !payload.email) return null;
 
   const { data, error } = await supabaseAdmin
     .from('users')
     .select('id, email, role')
-    .eq('email', email)
+    .eq('email', payload.email)
     .single();
 
-  if (error || !data) return null;
+  if (error || !data || data.role !== 'admin') return null;
   return data;
 }
 

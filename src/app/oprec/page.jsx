@@ -165,18 +165,6 @@ export default function OprecPage() {
     return null;
   }
 
-  async function generateAppNumber() {
-    const year = new Date().getFullYear();
-    const { count } = await supabase
-      .from('applicants')
-      .select('id', { count: 'exact', head: true })
-      .like('app_number', `OPREC-${year}-%`);
-
-    const nextNumber = (count || 0) + 1;
-    const padded = String(nextNumber).padStart(3, '0');
-    return `OPREC-${year}-${padded}`;
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
@@ -190,31 +178,22 @@ export default function OprecPage() {
     setSubmitting(true);
 
     try {
-      const app_number = await generateAppNumber();
+      const res = await fetch('/api/oprec/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-      const payload = {
-        app_number,
-        full_name: formData.full_name.trim(),
-        nim: formData.nim.trim(),
-        email: formData.email ? formData.email.trim() : '-',
-        phone_wa: formData.phone_wa.trim(),
-        major: 'Teknologi Informasi',
-        cohort: formData.cohort,
-        choice_div_1: formData.choice_div_1.startsWith('fallback') ? null : formData.choice_div_1,
-        choice_div_2:
-          formData.choice_div_2 && !formData.choice_div_2.startsWith('fallback')
-            ? formData.choice_div_2
-            : null,
-        motivation: formData.motivation.trim(),
-      };
+      const data = await res.json();
 
-      const { error } = await supabase.from('applicants').insert(payload);
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal mengirim pendaftaran.');
+      }
 
-      if (error) throw error;
+      const applicant = data.applicant;
 
       setSubmittedApplicant({
-        ...payload,
-        // simpan nama divisi untuk ditampilkan di PDF
+        ...applicant,
         divisionNames: {
           choice1: divisions.find((d) => d.id === formData.choice_div_1)?.name,
           choice2: divisions.find((d) => d.id === formData.choice_div_2)?.name,
@@ -222,7 +201,7 @@ export default function OprecPage() {
       });
     } catch (err) {
       console.error(err);
-      setErrorMsg('Terjadi kesalahan saat mengirim pendaftaran. Silakan coba lagi.');
+      setErrorMsg(err.message || 'Terjadi kesalahan saat mengirim pendaftaran. Silakan coba lagi.');
     } finally {
       setSubmitting(false);
     }

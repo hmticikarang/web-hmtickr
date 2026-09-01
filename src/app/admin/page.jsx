@@ -38,14 +38,16 @@ const TABS = [
   { key: 'aspirasi', label: 'Inbox Aspirasi', icon: MessageSquareHeart },
 ];
 
-// Helper untuk fetch dengan header sesi admin
+// Helper untuk fetch dengan credentials & Bearer token
 function authFetch(session, url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  if (session?.token) {
+    headers['Authorization'] = `Bearer ${session.token}`;
+  }
   return fetch(url, {
     ...options,
-    headers: {
-      ...(options.headers || {}),
-      'x-admin-email': session.email,
-    },
+    credentials: 'same-origin',
+    headers,
   });
 }
 
@@ -72,7 +74,7 @@ export default function AdminPage() {
   // Ambil status oprec saat ini
   useEffect(() => {
     if (!session) return;
-    fetch('/api/admin/settings')
+    authFetch(session, '/api/admin/settings')
       .then((res) => res.json())
       .then((data) => setOprecStatus(data.oprec_status || 'closed'))
       .catch(() => { });
@@ -93,7 +95,12 @@ export default function AdminPage() {
     }
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch (e) {
+      console.error(e);
+    }
     localStorage.removeItem('admin_session');
     setSession(null);
   }

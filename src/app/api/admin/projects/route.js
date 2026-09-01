@@ -10,8 +10,7 @@ export async function GET(request) {
 
   const { data, error } = await supabaseAdmin
     .from('projects')
-    .select('id, title, event_date, background, achievements, photos_urls, division_id, divisions(id, name), created_at')
-    .order('event_date', { ascending: false, nullsFirst: false })
+    .select('id, title, background, achievements, photos_urls, division_id, divisions(id, name), created_at')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -28,7 +27,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { title, event_date, background, achievements, division_id, photos_urls } = body;
+  const { title, background, achievements, division_id, photos_urls } = body;
 
   if (!title || !background) {
     return NextResponse.json(
@@ -41,13 +40,12 @@ export async function POST(request) {
     .from('projects')
     .insert({
       title,
-      event_date: event_date || null,
       background,
       achievements: achievements || '',
       division_id: division_id || null,
       photos_urls: photos_urls || [],
     })
-    .select('id, title, event_date, background, achievements, photos_urls, division_id, created_at')
+    .select('id, title, background, achievements, photos_urls, division_id, created_at')
     .single();
 
   if (error) {
@@ -67,7 +65,7 @@ export async function PUT(request) {
   }
 
   const body = await request.json();
-  const { id, title, event_date, background, achievements, division_id, photos_urls } = body;
+  const { id, title, background, achievements, division_id, photos_urls } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'ID proker wajib disertakan.' }, { status: 400 });
@@ -100,14 +98,13 @@ export async function PUT(request) {
     .from('projects')
     .update({
       title,
-      event_date: event_date || null,
       background,
       achievements: achievements || '',
       division_id: division_id || null,
       photos_urls: photos_urls || [],
     })
     .eq('id', id)
-    .select('id, title, event_date, background, achievements, photos_urls, division_id, created_at')
+    .select('id, title, background, achievements, photos_urls, division_id, created_at')
     .single();
 
   if (error) {

@@ -13,7 +13,6 @@ const FALLBACK_PROJECTS = {
     division_name: 'BPH',
     description:
       'Seminar nasional yang menghadirkan para pemimpin inspiratif untuk berbagi pengalaman dan wawasan kepemimpinan kepada mahasiswa Teknologi Informasi Cikarang.',
-    event_date: '2025-05-10',
     photos_urls: [],
   },
   'dummy-2': {
@@ -22,7 +21,6 @@ const FALLBACK_PROJECTS = {
     division_name: 'KOMINFO',
     description:
       'Program pelatihan intensif di bidang desain grafis dan media kreatif untuk memperkuat kapasitas visual dan komunikasi digital mahasiswa.',
-    event_date: '2025-06-15',
     photos_urls: [],
   },
   'dummy-3': {
@@ -31,7 +29,6 @@ const FALLBACK_PROJECTS = {
     division_name: 'LITBANG',
     description:
       'Riset mendalam tentang kepuasan mahasiswa terhadap layanan akademik dan organisasi untuk mendorong perbaikan yang berkelanjutan.',
-    event_date: '2025-07-20',
     photos_urls: [],
   },
   'dummy-4': {
@@ -40,7 +37,6 @@ const FALLBACK_PROJECTS = {
     division_name: 'PSDM',
     description:
       'Kegiatan pembekalan soft skill dan pelatihan kepemimpinan internal untuk mengembangkan potensi seluruh anggota himpunan.',
-    event_date: '2025-08-05',
     photos_urls: [],
   },
 };
@@ -48,7 +44,7 @@ const FALLBACK_PROJECTS = {
 async function getProject(id) {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, description, event_date, background, achievements, photos_urls, division_id, divisions(name)')
+    .select('id, title, background, achievements, photos_urls, division_id, divisions(name), created_at')
     .eq('id', id)
     .single();
 
@@ -59,8 +55,9 @@ async function getProject(id) {
   return {
     id: data.id,
     title: data.title,
-    description: data.description || data.background || '',
-    event_date: data.event_date,
+    description: data.background || '',
+    achievements: data.achievements || '',
+    created_at: data.created_at,
     photos_urls: data.photos_urls || [],
     division_name: data.divisions?.name || 'Umum',
   };
@@ -110,10 +107,10 @@ export default async function ProkerDetailPage({ params }) {
             {proker.title}
           </h1>
 
-          {proker.event_date && (
+          {proker.created_at && (
             <div className="mt-4 flex items-center gap-2 text-sm text-slate-300">
               <Calendar className="h-4 w-4 text-blue-400" />
-              <span>{formatDate(proker.event_date)}</span>
+              <span>Ditambahkan {formatDate(proker.created_at)}</span>
             </div>
           )}
         </div>

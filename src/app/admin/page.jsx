@@ -504,7 +504,7 @@ function ProkerCmsForm({ session }) {
 }
 
 function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
-  const [form, setForm] = useState({ title: '', event_date: '', description: '' });
+  const [form, setForm] = useState({ title: '', event_date: '', background: '' });
   const [existingPhotos, setExistingPhotos] = useState([]); // array of URLs
   const [photos, setPhotos] = useState([]); // array of File
   const [uploading, setUploading] = useState(false);
@@ -516,13 +516,13 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       setForm({
         title: editingProker.title || '',
         event_date: editingProker.event_date ? editingProker.event_date.slice(0, 10) : '',
-        description: editingProker.description || editingProker.background || '',
+        background: editingProker.background || '',
       });
       setExistingPhotos(editingProker.photos_urls || []);
       setPhotos([]);
       setSuccessMsg('');
     } else {
-      setForm({ title: '', event_date: '', description: '' });
+      setForm({ title: '', event_date: '', background: '' });
       setExistingPhotos([]);
       setPhotos([]);
     }
@@ -596,7 +596,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       if (res.ok) {
         setSuccessMsg(isEdit ? 'Proker berhasil diperbarui!' : 'Proker berhasil ditambahkan!');
         if (!isEdit) {
-          setForm({ title: '', event_date: '', description: '' });
+          setForm({ title: '', event_date: '', background: '' });
           setPhotos([]);
         } else {
           setEditingProker(null);
@@ -648,8 +648,8 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       <div className="mb-4">
         <label className="mb-1.5 block text-sm font-medium text-slate-700">Deskripsi Program Kerja</label>
         <textarea
-          name="description"
-          value={form.description}
+          name="background"
+          value={form.background}
           onChange={handleChange}
           required
           rows={4}

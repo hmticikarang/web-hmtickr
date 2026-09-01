@@ -57,7 +57,7 @@ async function getOprecStatus() {
 async function getLatestProjects() {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, description, event_date, background, photos_urls, created_at')
+    .select('id, title, event_date, background, photos_urls, created_at')
     .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
     .limit(3);
@@ -67,7 +67,7 @@ async function getLatestProjects() {
   const mapped = data.map((p) => ({
     id: p.id,
     title: p.title,
-    background: p.description || p.background || '',
+    background: p.background || '',
     event_date: p.event_date,
     photos_urls: p.photos_urls || [],
     created_at: p.created_at,

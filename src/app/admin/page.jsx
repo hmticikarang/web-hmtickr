@@ -504,7 +504,7 @@ function ProkerCmsForm({ session }) {
 }
 
 function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
-  const [form, setForm] = useState({ title: '', background: '' });
+  const [form, setForm] = useState({ title: '', event_date: '', background: '' });
   const [existingPhotos, setExistingPhotos] = useState([]); // array of URLs
   const [photos, setPhotos] = useState([]); // array of File
   const [uploading, setUploading] = useState(false);
@@ -515,13 +515,14 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
     if (editingProker) {
       setForm({
         title: editingProker.title || '',
+        event_date: editingProker.event_date ? editingProker.event_date.slice(0, 10) : '',
         background: editingProker.background || '',
       });
       setExistingPhotos(editingProker.photos_urls || []);
       setPhotos([]);
       setSuccessMsg('');
     } else {
-      setForm({ title: '', background: '' });
+      setForm({ title: '', event_date: '', background: '' });
       setExistingPhotos([]);
       setPhotos([]);
     }
@@ -595,7 +596,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
       if (res.ok) {
         setSuccessMsg(isEdit ? 'Proker berhasil diperbarui!' : 'Proker berhasil ditambahkan!');
         if (!isEdit) {
-          setForm({ title: '', background: '' });
+          setForm({ title: '', event_date: '', background: '' });
           setPhotos([]);
         } else {
           setEditingProker(null);
@@ -629,6 +630,17 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
           onChange={handleChange}
           required
           placeholder="Contoh: Seminar Nasional Kepemimpinan 2025"
+          className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1.5 block text-sm font-medium text-slate-700">Tanggal Pelaksanaan</label>
+        <input
+          type="date"
+          name="event_date"
+          value={form.event_date}
+          onChange={handleChange}
           className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/20"
         />
       </div>

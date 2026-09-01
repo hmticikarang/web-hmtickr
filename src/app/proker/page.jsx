@@ -11,9 +11,12 @@ export const metadata = {
 // ISR: katalog proker jarang berubah, cache 5 menit agar ringan
 export const revalidate = 300;
 
-function sortByCreatedAtDesc(list) {
+function sortByEventDateDesc(list) {
   if (!list || !Array.isArray(list)) return [];
   return [...list].sort((a, b) => {
+    const timeA = a.event_date ? new Date(a.event_date).getTime() : 0;
+    const timeB = b.event_date ? new Date(b.event_date).getTime() : 0;
+    if (timeA !== timeB) return timeB - timeA;
     const createdA = a.created_at ? new Date(a.created_at).getTime() : 0;
     const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
     return createdB - createdA;
@@ -26,24 +29,28 @@ const FALLBACK_PROJECTS = [
     id: 'dummy-4',
     title: 'Pelatihan Pengembangan Diri Anggota',
     description: 'Kegiatan pembekalan soft skill dan pelatihan kepemimpinan internal untuk pengembangan anggota.',
+    event_date: '2025-08-05',
     photos_urls: [],
   },
   {
     id: 'dummy-3',
     title: 'Riset Kepuasan Mahasiswa',
     description: 'Riset mendalam tentang kepuasan mahasiswa terhadap layanan akademik dan organisasi untuk memperkuat evaluasi himpunan.',
+    event_date: '2025-07-20',
     photos_urls: [],
   },
   {
     id: 'dummy-2',
     title: 'Pelatihan Desain & Media Kreatif',
     description: 'Program pelatihan intensif di bidang desain grafis dan media kreatif untuk memperkuat kapasitas visual mahasiswa.',
+    event_date: '2025-06-15',
     photos_urls: [],
   },
   {
     id: 'dummy-1',
     title: 'Seminar Nasional Kepemimpinan',
     description: 'Seminar nasional yang menghadirkan para pemimpin inspiratif untuk berbagi pengalaman kepada mahasiswa Teknologi Informasi Cikarang.',
+    event_date: '2025-05-10',
     photos_urls: [],
   },
 ];
@@ -51,20 +58,22 @@ const FALLBACK_PROJECTS = [
 async function getAllProjects() {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, background, photos_urls, created_at')
+    .select('id, title, event_date, background, photos_urls, created_at')
+    .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
-  if (error || !data || data.length === 0) return sortByCreatedAtDesc(FALLBACK_PROJECTS);
+  if (error || !data || data.length === 0) return sortByEventDateDesc(FALLBACK_PROJECTS);
 
   const mapped = data.map((p) => ({
     id: p.id,
     title: p.title,
     description: p.background || '',
+    event_date: p.event_date,
     photos_urls: p.photos_urls || [],
     created_at: p.created_at,
   }));
 
-  return sortByCreatedAtDesc(mapped);
+  return sortByEventDateDesc(mapped);
 }
 
 function formatDate(dateStr) {
@@ -124,10 +133,10 @@ export default async function ProkerPage() {
                     )}
                   </div>
                   <div className="p-5">
-                    {proker.created_at && (
+                    {proker.event_date && (
                       <span className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
                         <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(proker.created_at)}
+                        {formatDate(proker.event_date)}
                       </span>
                     )}
                     <h3 className="mt-2 text-base font-bold text-[#0F172A] transition-colors duration-300 group-hover:text-[#1E3A8A]">

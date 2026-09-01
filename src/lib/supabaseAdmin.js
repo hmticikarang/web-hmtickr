@@ -88,17 +88,36 @@ export async function verifyAdminSession(request) {
 
 /**
  * Ekstrak relative path file dari public URL Supabase Storage.
- * Contoh URL: https://xxx.supabase.co/storage/v1/object/public/himpunan-media/projects/123.jpg
+ * Contoh URL: https://xxx.supabase.co/storage/v1/object/public/himpunan-media/projects/123.jpg?t=1725...
  * Output: 'projects/123.jpg'
  */
 export function getStoragePathFromUrl(url) {
   if (!url || typeof url !== 'string') return null;
-  const marker = '/storage/v1/object/public/himpunan-media/';
-  const index = url.indexOf(marker);
+
+  // Hapus query string & hash (misal ?t=123 atau ?token=...)
+  let cleanUrl = url.split('?')[0].split('#')[0];
+
+  // Cari marker '/himpunan-media/' dalam URL
+  const bucketMarker = '/himpunan-media/';
+  const index = cleanUrl.indexOf(bucketMarker);
+
   if (index !== -1) {
-    return url.substring(index + marker.length);
+    cleanUrl = cleanUrl.substring(index + bucketMarker.length);
   }
-  return null;
+
+  // Handle URL encoding (contoh: %20 -> spasi)
+  try {
+    cleanUrl = decodeURIComponent(cleanUrl);
+  } catch {
+    // Jika decodeURIComponent gagal, gunakan cleanUrl apa adanya
+  }
+
+  // Jika URL berupa full http(s) URL yang tidak cocok dengan marker bucket
+  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+    return null;
+  }
+
+  return cleanUrl.trim() || null;
 }
 
 /**
@@ -106,7 +125,7 @@ export function getStoragePathFromUrl(url) {
  */
 export async function deleteStorageFilesFromUrls(urls) {
   if (!urls) return;
-  const urlList = Array.isArray(urls) ? urls : [urls];
+  const urlList = (Array.isArray(urls) ? urls : [urls]).flat();
   const filePaths = urlList
     .map((url) => getStoragePathFromUrl(url))
     .filter(Boolean);
@@ -114,12 +133,14 @@ export async function deleteStorageFilesFromUrls(urls) {
   if (filePaths.length === 0) return;
 
   try {
-    const { error } = await supabaseAdmin.storage
+    const { data, error } = await supabaseAdmin.storage
       .from('himpunan-media')
       .remove(filePaths);
 
     if (error) {
-      console.error('Error deleting storage files:', error.message);
+      console.error('Error deleting storage files:', error.message, filePaths);
+    } else {
+      console.log('Berhasil menghapus file storage:', filePaths);
     }
   } catch (err) {
     console.error('Error executing storage remove:', err);

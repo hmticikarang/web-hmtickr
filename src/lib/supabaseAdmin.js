@@ -9,11 +9,17 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!serviceRoleKey) {
   console.warn(
-    'SUPABASE_SERVICE_ROLE_KEY belum diset di .env.local. Semua operasi admin (login, toggle oprec, convert officer, dsb) akan gagal.'
+    '[SUPABASE ADMIN WARNING] SUPABASE_SERVICE_ROLE_KEY belum diset di .env.local atau environment variable server. Operasi admin (bypassing RLS) tidak akan berfungsi!'
   );
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+if (!supabaseUrl) {
+  console.warn(
+    '[SUPABASE ADMIN WARNING] NEXT_PUBLIC_SUPABASE_URL belum diset.'
+  );
+}
+
+export const supabaseAdmin = createClient(supabaseUrl || '', serviceRoleKey || '', {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 

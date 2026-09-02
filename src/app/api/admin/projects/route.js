@@ -116,6 +116,8 @@ export async function PUT(request) {
 
   revalidatePath('/');
   revalidatePath('/proker');
+  revalidatePath(`/proker/${id}`);
+  revalidatePath('/proker/[id]', 'page');
 
   return NextResponse.json({ project: data });
 }
@@ -153,6 +155,8 @@ export async function DELETE(request) {
 
   revalidatePath('/');
   revalidatePath('/proker');
+  revalidatePath(`/proker/${id}`);
+  revalidatePath('/proker/[id]', 'page');
 
   return NextResponse.json({ success: true });
 }

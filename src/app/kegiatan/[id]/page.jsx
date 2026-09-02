@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, Calendar, FileText, Folder, ImageOff, ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export const revalidate = 300;
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 const FALLBACK_ACTIVITIES = {
   'dummy-1': {
@@ -65,7 +66,10 @@ async function getActivity(id) {
     .single();
 
   if (error || !data) {
-    return FALLBACK_ACTIVITIES[id] || null;
+    if (FALLBACK_ACTIVITIES[id]) {
+      return FALLBACK_ACTIVITIES[id];
+    }
+    notFound();
   }
 
   return {

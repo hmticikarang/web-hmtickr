@@ -112,6 +112,8 @@ export async function PUT(request) {
 
   revalidatePath('/');
   revalidatePath('/kegiatan');
+  revalidatePath(`/kegiatan/${id}`);
+  revalidatePath('/kegiatan/[id]', 'page');
 
   return NextResponse.json({ activity: data });
 }
@@ -149,6 +151,8 @@ export async function DELETE(request) {
 
   revalidatePath('/');
   revalidatePath('/kegiatan');
+  revalidatePath(`/kegiatan/${id}`);
+  revalidatePath('/kegiatan/[id]', 'page');
 
   return NextResponse.json({ success: true });
 }

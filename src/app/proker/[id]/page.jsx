@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, Calendar, FileText, Tag, ImageOff, ImageIcon, FolderKanban } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export const revalidate = 300;
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 const FALLBACK_PROJECTS = {
   'dummy-1': {
@@ -53,7 +54,10 @@ async function getProject(id) {
     .single();
 
   if (error || !data) {
-    return FALLBACK_PROJECTS[id] || null;
+    if (FALLBACK_PROJECTS[id]) {
+      return FALLBACK_PROJECTS[id];
+    }
+    notFound();
   }
 
   return {

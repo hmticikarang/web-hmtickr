@@ -50,6 +50,63 @@ const FALLBACK_OFFICERS = [
   { id: 'h30', full_name: 'Wildan Abdu Rachman', position: 'Anggota', division_name: 'LITBANG', photo_url: null, linkedin_url: null, instagram_url: null },
 ];
 
+const DIVISION_ORDER = {
+  BPH: 1,
+  PSDM: 2,
+  KOMINFO: 3,
+  LITBANG: 4,
+};
+
+function getDivisionRank(divisionName = '') {
+  const name = divisionName.toUpperCase().trim();
+  return DIVISION_ORDER[name] ?? 99;
+}
+
+function getPositionRank(position = '') {
+  const pos = position.toLowerCase().trim();
+
+  // 1: Ketua / Ketua Cabang / Ketua Divisi
+  if (pos.includes('ketua') && !pos.includes('wakil')) {
+    return 1;
+  }
+  // 2: Wakil Ketua / Wakil Ketua Cabang / Wakil Ketua Divisi
+  if (pos.includes('wakil')) {
+    return 2;
+  }
+  // 3: Sekretaris / Sekertaris / Bendahara
+  if (pos.includes('sekretaris') || pos.includes('sekertaris') || pos.includes('bendahara')) {
+    return 3;
+  }
+  // 4: Anggota / Staff
+  if (pos.includes('anggota') || pos.includes('staff')) {
+    return 4;
+  }
+
+  return 5;
+}
+
+function sortOfficers(officersList) {
+  if (!Array.isArray(officersList)) return [];
+
+  return [...officersList].sort((a, b) => {
+    // 1. Urutan kelompok divisi (Khusus 'Semua' & hirarki antar divisi)
+    const divRankA = getDivisionRank(a.division_name);
+    const divRankB = getDivisionRank(b.division_name);
+    if (divRankA !== divRankB) {
+      return divRankA - divRankB;
+    }
+
+    // 2. Hierarki posisi / jabatan
+    const posRankA = getPositionRank(a.position);
+    const posRankB = getPositionRank(b.position);
+    if (posRankA !== posRankB) {
+      return posRankA - posRankB;
+    }
+
+    return (a.full_name || '').localeCompare(b.full_name || '');
+  });
+}
+
 async function getOfficers() {
   const { data, error } = await supabase
     .from('officers')
@@ -57,9 +114,9 @@ async function getOfficers() {
     .eq('is_active', true)
     .order('created_at', { ascending: true });
 
-  if (error || !data || data.length === 0) return FALLBACK_OFFICERS;
+  if (error || !data || data.length === 0) return sortOfficers(FALLBACK_OFFICERS);
 
-  return data.map((o) => ({
+  const mapped = data.map((o) => ({
     id: o.id,
     full_name: o.full_name,
     position: o.position,
@@ -68,6 +125,8 @@ async function getOfficers() {
     linkedin_url: o.linkedin_url,
     instagram_url: o.instagram_url,
   }));
+
+  return sortOfficers(mapped);
 }
 
 export default async function StrukturPage() {

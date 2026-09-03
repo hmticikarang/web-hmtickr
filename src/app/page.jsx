@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { ArrowRight, Sparkles, Users, FolderKanban, Folder, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { InteractiveHoverButton } from '../components/ui/InteractiveHoverButton';
+import ScrollRevealContainer from '../components/ScrollRevealContainer';
 
 // ISR: cache 60 detik. Beranda tidak perlu di-generate ulang di setiap
 // request karena proker terbaru & status oprec tidak berubah tiap detik.
@@ -176,7 +177,11 @@ export default async function HomePage() {
       </section>
 
       {/* PROKER UNGGULAN */}
-      <section className="bg-white py-10 lg:py-14">
+      <ScrollRevealContainer
+        as="section"
+        className="bg-white py-10 lg:py-14"
+        options={{ duration: 800, distance: '30px', easing: 'ease-out', reset: false, origin: 'bottom' }}
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
             <div>
@@ -234,10 +239,14 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollRevealContainer>
 
       {/* GALERI KEGIATAN */}
-      <section className="bg-slate-50/50 border-t border-slate-100 py-10 lg:py-14">
+      <ScrollRevealContainer
+        as="section"
+        className="bg-slate-50/50 border-t border-slate-100 py-10 lg:py-14"
+        options={{ duration: 800, distance: '30px', easing: 'ease-out', reset: false, origin: 'bottom' }}
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
             <div>
@@ -303,10 +312,14 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </ScrollRevealContainer>
 
       {/* CTA STRIP */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+      <ScrollRevealContainer
+        as="section"
+        className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+        options={{ duration: 800, distance: '30px', easing: 'ease-out', reset: false, origin: 'bottom' }}
+      >
         <div className="flex flex-col items-center justify-between gap-6 rounded-2xl bg-[#0F172A] p-8 text-center sm:flex-row sm:text-left lg:p-12">
           <div className="flex items-center gap-4">
             <div className="hidden shrink-0 rounded-full bg-white/10 p-3 sm:block">
@@ -328,7 +341,7 @@ export default async function HomePage() {
             />
           </Link>
         </div>
-      </section>
+      </ScrollRevealContainer>
     </div>
   );
 }

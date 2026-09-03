@@ -3,18 +3,77 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Linkedin, Instagram, User } from 'lucide-react';
+import ScrollRevealContainer from '@/components/ScrollRevealContainer';
+
+const DIVISION_ORDER = {
+  BPH: 1,
+  PSDM: 2,
+  KOMINFO: 3,
+  LITBANG: 4,
+};
+
+function getDivisionRank(divisionName = '') {
+  const name = divisionName.toUpperCase().trim();
+  return DIVISION_ORDER[name] ?? 99;
+}
+
+function getPositionRank(position = '') {
+  const pos = position.toLowerCase().trim();
+
+  // 1: Ketua / Ketua Cabang / Ketua Divisi
+  if (pos.includes('ketua') && !pos.includes('wakil')) {
+    return 1;
+  }
+  // 2: Wakil Ketua / Wakil Ketua Cabang / Wakil Ketua Divisi
+  if (pos.includes('wakil')) {
+    return 2;
+  }
+  // 3: Sekretaris / Sekertaris / Bendahara
+  if (pos.includes('sekretaris') || pos.includes('sekertaris') || pos.includes('bendahara')) {
+    return 3;
+  }
+  // 4: Anggota / Staff
+  if (pos.includes('anggota') || pos.includes('staff')) {
+    return 4;
+  }
+
+  return 5;
+}
+
+function sortOfficers(officersList) {
+  if (!Array.isArray(officersList)) return [];
+
+  return [...officersList].sort((a, b) => {
+    const divRankA = getDivisionRank(a.division_name);
+    const divRankB = getDivisionRank(b.division_name);
+    if (divRankA !== divRankB) {
+      return divRankA - divRankB;
+    }
+
+    const posRankA = getPositionRank(a.position);
+    const posRankB = getPositionRank(b.position);
+    if (posRankA !== posRankB) {
+      return posRankA - posRankB;
+    }
+
+    return (a.full_name || '').localeCompare(b.full_name || '');
+  });
+}
 
 export default function StrukturFilter({ officers }) {
   const [activeFilter, setActiveFilter] = useState('Semua');
 
   const filterTabs = useMemo(() => {
     const unique = Array.from(new Set(officers.map((o) => o.division_name)));
+    unique.sort((a, b) => getDivisionRank(a) - getDivisionRank(b));
     return ['Semua', ...unique];
   }, [officers]);
 
   const filteredOfficers = useMemo(() => {
-    if (activeFilter === 'Semua') return officers;
-    return officers.filter((o) => o.division_name === activeFilter);
+    const list = activeFilter === 'Semua' 
+      ? officers 
+      : officers.filter((o) => o.division_name === activeFilter);
+    return sortOfficers(list);
   }, [officers, activeFilter]);
 
   return (
@@ -43,61 +102,74 @@ export default function StrukturFilter({ officers }) {
         {filteredOfficers.length === 0 ? (
           <p className="text-center text-sm text-slate-500">Belum ada data pengurus untuk divisi ini.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-            {filteredOfficers.map((officer) => (
-              <div
-                key={officer.id}
-                className="group rounded-xl border border-slate-100 bg-white p-5 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="relative mx-auto mb-4 aspect-square w-full overflow-hidden rounded-xl bg-slate-100">
-                  {officer.photo_url ? (
-                    <Image
-                      src={officer.photo_url}
-                      alt={officer.full_name}
-                      fill
-                      sizes="(max-width: 640px) 45vw, 200px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
-                      <User className="h-10 w-10 text-white/50" />
-                    </div>
-                  )}
-                </div>
+          <ScrollRevealContainer
+            selector=".officer-card"
+            triggerKey={activeFilter}
+            options={{
+              duration: 800,
+              distance: '30px',
+              easing: 'ease-out',
+              reset: false,
+              interval: 100,
+              origin: 'bottom',
+            }}
+          >
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+              {filteredOfficers.map((officer) => (
+                <div
+                  key={officer.id}
+                  className="officer-card group rounded-xl border border-slate-100 bg-white p-5 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="relative mx-auto mb-4 aspect-square w-full overflow-hidden rounded-xl bg-slate-100">
+                    {officer.photo_url ? (
+                      <Image
+                        src={officer.photo_url}
+                        alt={officer.full_name}
+                        fill
+                        sizes="(max-width: 640px) 45vw, 200px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
+                        <User className="h-10 w-10 text-white/50" />
+                      </div>
+                    )}
+                  </div>
 
-                <h3 className="text-sm font-bold text-[#0F172A] sm:text-base">{officer.full_name}</h3>
-                <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">{officer.position}</p>
-                <span className="mt-2 inline-block rounded-full bg-[#1E3A8A]/10 px-3 py-1 text-[11px] font-semibold text-[#1E3A8A]">
-                  {officer.division_name}
-                </span>
+                  <h3 className="text-sm font-bold text-[#0F172A] sm:text-base">{officer.full_name}</h3>
+                  <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">{officer.position}</p>
+                  <span className="mt-2 inline-block rounded-full bg-[#1E3A8A]/10 px-3 py-1 text-[11px] font-semibold text-[#1E3A8A]">
+                    {officer.division_name}
+                  </span>
 
-                <div className="mt-4 flex items-center justify-center gap-2">
-                  {officer.linkedin_url && (
-                    <a
-                      href={officer.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-[#0F172A] hover:text-white"
-                      aria-label={`LinkedIn ${officer.full_name}`}
-                    >
-                      <Linkedin className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                  {officer.instagram_url && (
-                    <a
-                      href={officer.instagram_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-[#0F172A] hover:text-white"
-                      aria-label={`Instagram ${officer.full_name}`}
-                    >
-                      <Instagram className="h-3.5 w-3.5" />
-                    </a>
-                  )}
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    {officer.linkedin_url && (
+                      <a
+                        href={officer.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-[#0F172A] hover:text-white"
+                        aria-label={`LinkedIn ${officer.full_name}`}
+                      >
+                        <Linkedin className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                    {officer.instagram_url && (
+                      <a
+                        href={officer.instagram_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-[#0F172A] hover:text-white"
+                        aria-label={`Instagram ${officer.full_name}`}
+                      >
+                        <Instagram className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </ScrollRevealContainer>
         )}
       </section>
     </>

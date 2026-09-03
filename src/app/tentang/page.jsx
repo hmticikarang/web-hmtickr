@@ -1,4 +1,5 @@
 import { Target, Eye, CheckCircle2 } from 'lucide-react';
+import ScrollRevealContainer from '@/components/ScrollRevealContainer';
 
 export const metadata = {
   title: 'Tentang Kami | HMTI Cikarang',
@@ -49,7 +50,11 @@ export default function TentangPage() {
       </section>
 
       {/* VISI */}
-      <section className="bg-white py-16 lg:py-20">
+      <ScrollRevealContainer
+        as="section"
+        className="bg-white py-16 lg:py-20"
+        options={{ duration: 800, distance: '30px', easing: 'ease-out', reset: false, origin: 'bottom' }}
+      >
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#1E3A8A]">
@@ -94,10 +99,14 @@ export default function TentangPage() {
             </div>
           </div>
         </div>
-      </section>
+      </ScrollRevealContainer>
 
       {/* MISI */}
-      <section className="bg-[#F8FAFC] py-16 lg:py-20">
+      <ScrollRevealContainer
+        as="section"
+        className="bg-[#F8FAFC] py-16 lg:py-20"
+        options={{ duration: 800, distance: '30px', easing: 'ease-out', reset: false, origin: 'bottom' }}
+      >
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#1E3A8A]">
@@ -122,7 +131,7 @@ export default function TentangPage() {
             </ul>
           </div>
         </div>
-      </section>
+      </ScrollRevealContainer>
     </div>
   );
 }

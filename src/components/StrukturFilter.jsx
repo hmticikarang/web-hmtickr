@@ -118,20 +118,20 @@ export default function StrukturFilter({ officers }) {
               {filteredOfficers.map((officer) => (
                 <div
                   key={officer.id}
-                  className="officer-card group rounded-xl border border-slate-100 bg-white p-5 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                  className="officer-card group rounded-xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
                 >
-                  <div className="relative mx-auto mb-4 aspect-square w-full overflow-hidden rounded-xl bg-slate-100">
+                  <div className="relative mx-auto mb-3 aspect-[4/5] w-full overflow-hidden rounded-xl bg-slate-100">
                     {officer.photo_url ? (
                       <Image
                         src={officer.photo_url}
                         alt={officer.full_name}
                         fill
-                        sizes="(max-width: 640px) 45vw, 200px"
+                        sizes="(max-width: 640px) 45vw, 250px"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
-                        <User className="h-10 w-10 text-white/50" />
+                        <User className="h-12 w-12 text-white/50" />
                       </div>
                     )}
                   </div>

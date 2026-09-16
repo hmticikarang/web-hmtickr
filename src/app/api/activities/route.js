@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export async function GET() {
   const { data, error } = await supabase
     .from('activities')
-    .select('id, title, description, event_date, photos_urls, created_at')
+    .select('id, title, description, event_date, thumbnail_url, photos_urls, created_at')
     .order('event_date', { ascending: false });
 
   if (error) {

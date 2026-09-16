@@ -61,7 +61,7 @@ const FALLBACK_ACTIVITIES = {
 async function getActivity(id) {
   const { data, error } = await supabase
     .from('activities')
-    .select('id, title, description, event_date, photos_urls, created_at')
+    .select('id, title, description, event_date, thumbnail_url, photos_urls, created_at')
     .eq('id', id)
     .single();
 
@@ -77,6 +77,7 @@ async function getActivity(id) {
     title: data.title,
     description: data.description,
     event_date: data.event_date,
+    thumbnail_url: data.thumbnail_url,
     photos_urls: data.photos_urls || [],
   };
 }
@@ -107,7 +108,7 @@ export default async function KegiatanDetailPage({ params }) {
 
   if (!activity) notFound();
 
-  const mainPhoto = activity.photos_urls?.[0];
+  const mainPhoto = activity.thumbnail_url || activity.photos_urls?.[0];
   const additionalPhotos = activity.photos_urls?.slice(1) || [];
 
   return (

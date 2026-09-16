@@ -10,7 +10,7 @@ export async function GET(request) {
 
   const { data, error } = await supabaseAdmin
     .from('activities')
-    .select('id, title, description, event_date, photos_urls, created_at')
+    .select('id, title, description, event_date, thumbnail_url, photos_urls, created_at')
     .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
@@ -28,7 +28,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { title, description, event_date, photos_urls } = body;
+  const { title, description, event_date, photos_urls, thumbnail_url } = body;
 
   if (!title || !description) {
     return NextResponse.json(
@@ -37,13 +37,17 @@ export async function POST(request) {
     );
   }
 
+  const finalPhotos = photos_urls || [];
+  const finalThumbnail = thumbnail_url && finalPhotos.includes(thumbnail_url) ? thumbnail_url : (finalPhotos[0] || null);
+
   const { data, error } = await supabaseAdmin
     .from('activities')
     .insert({
       title,
       description,
       event_date: event_date || null,
-      photos_urls: photos_urls || [],
+      thumbnail_url: finalThumbnail,
+      photos_urls: finalPhotos,
     })
     .select()
     .single();
@@ -65,7 +69,7 @@ export async function PUT(request) {
   }
 
   const body = await request.json();
-  const { id, title, description, event_date, photos_urls } = body;
+  const { id, title, description, event_date, photos_urls, thumbnail_url } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'ID kegiatan wajib disertakan.' }, { status: 400 });
@@ -94,13 +98,17 @@ export async function PUT(request) {
     }
   }
 
+  const finalPhotos = photos_urls || [];
+  const finalThumbnail = thumbnail_url && finalPhotos.includes(thumbnail_url) ? thumbnail_url : (finalPhotos[0] || null);
+
   const { data, error } = await supabaseAdmin
     .from('activities')
     .update({
       title,
       description,
       event_date: event_date || null,
-      photos_urls: photos_urls || [],
+      thumbnail_url: finalThumbnail,
+      photos_urls: finalPhotos,
     })
     .eq('id', id)
     .select()

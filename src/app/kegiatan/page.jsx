@@ -53,7 +53,7 @@ const FALLBACK_ACTIVITIES = [
 async function getAllActivities() {
   const { data, error } = await supabase
     .from('activities')
-    .select('id, title, description, event_date, photos_urls, created_at')
+    .select('id, title, description, event_date, thumbnail_url, photos_urls, created_at')
     .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
@@ -108,28 +108,30 @@ export default async function KegiatanPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {activities.map((activity) => (
-              <Link
-                key={activity.id}
-                href={`/kegiatan/${activity.id}`}
-                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl"
-              >
-                {/* Foto */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                  {activity.photos_urls?.[0] ? (
-                    <Image
-                      src={activity.photos_urls[0]}
-                      alt={activity.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 400px"
-                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
-                      <FolderKanban className="h-10 w-10 text-white/40" />
-                    </div>
-                  )}
-                </div>
+            {activities.map((activity) => {
+              const thumbnailSrc = activity.thumbnail_url || activity.photos_urls?.[0];
+              return (
+                <Link
+                  key={activity.id}
+                  href={`/kegiatan/${activity.id}`}
+                  className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl"
+                >
+                  {/* Foto */}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                    {thumbnailSrc ? (
+                      <Image
+                        src={thumbnailSrc}
+                        alt={activity.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 400px"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
+                        <FolderKanban className="h-10 w-10 text-white/40" />
+                      </div>
+                    )}
+                  </div>
 
                 {/* Konten */}
                 <div className="p-5">
@@ -152,8 +154,9 @@ export default async function KegiatanPage() {
                   </span>
                 </div>
               </Link>
-            ))}
-          </div>
+            );
+          })}
+        </div>
         )}
       </section>
     </div>

@@ -49,7 +49,7 @@ const FALLBACK_PROJECTS = {
 async function getProject(id) {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, event_date, background, achievements, photos_urls, division_id, divisions(name), created_at')
+    .select('id, title, event_date, background, achievements, thumbnail_url, photos_urls, division_id, divisions(name), created_at')
     .eq('id', id)
     .single();
 
@@ -67,6 +67,7 @@ async function getProject(id) {
     achievements: data.achievements || '',
     event_date: data.event_date,
     created_at: data.created_at,
+    thumbnail_url: data.thumbnail_url,
     photos_urls: data.photos_urls || [],
     division_name: data.divisions?.name || 'Umum',
   };
@@ -98,7 +99,7 @@ export default async function ProkerDetailPage({ params }) {
 
   if (!proker) notFound();
 
-  const mainPhoto = proker.photos_urls?.[0];
+  const mainPhoto = proker.thumbnail_url || proker.photos_urls?.[0];
 
   return (
     <div>

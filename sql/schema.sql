@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS projects (
   background TEXT,
   achievements TEXT,
   division_id UUID REFERENCES divisions(id),
+  thumbnail_url TEXT, -- URL foto yang dipilih sebagai thumbnail utama
   photos_urls TEXT[], -- Array URL foto dari Supabase Storage
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -74,6 +75,7 @@ CREATE TABLE IF NOT EXISTS activities (
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   event_date DATE,                -- Tanggal pelaksanaan kegiatan (opsional)
+  thumbnail_url TEXT,             -- URL foto yang dipilih sebagai thumbnail utama
   photos_urls TEXT[],             -- Array URL foto dokumentasi
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

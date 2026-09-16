@@ -17,6 +17,7 @@ import {
   User,
   Pencil,
   Heart,
+  Star,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import LoginForm from '@/components/admin/LoginForm';
@@ -507,6 +508,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
   const [form, setForm] = useState({ title: '', event_date: '', background: '' });
   const [existingPhotos, setExistingPhotos] = useState([]); // array of URLs
   const [photos, setPhotos] = useState([]); // array of File
+  const [thumbnailKey, setThumbnailKey] = useState(''); // key of selected thumbnail
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -518,13 +520,17 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
         event_date: editingProker.event_date ? editingProker.event_date.slice(0, 10) : '',
         background: editingProker.background || '',
       });
-      setExistingPhotos(editingProker.photos_urls || []);
+      const existing = editingProker.photos_urls || [];
+      setExistingPhotos(existing);
       setPhotos([]);
+      const initialThumb = editingProker.thumbnail_url || (existing.length > 0 ? existing[0] : '');
+      setThumbnailKey(initialThumb);
       setSuccessMsg('');
     } else {
       setForm({ title: '', event_date: '', background: '' });
       setExistingPhotos([]);
       setPhotos([]);
+      setThumbnailKey('');
     }
   }, [editingProker]);
 
@@ -533,12 +539,51 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
   }
 
   function handlePhotoSelect(e) {
-    setPhotos(Array.from(e.target.files));
+    const newFiles = Array.from(e.target.files);
+    setPhotos((prev) => [...prev, ...newFiles]);
   }
 
   function handleRemoveExistingPhoto(urlToRemove) {
-    setExistingPhotos((prev) => prev.filter((url) => url !== urlToRemove));
+    setExistingPhotos((prev) => {
+      const filtered = prev.filter((url) => url !== urlToRemove);
+      if (thumbnailKey === urlToRemove) {
+        setThumbnailKey(filtered[0] || (photos.length > 0 ? 'new-0' : ''));
+      }
+      return filtered;
+    });
   }
+
+  function handleRemoveNewPhoto(indexToRemove) {
+    setPhotos((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== indexToRemove);
+      if (thumbnailKey === `new-${indexToRemove}`) {
+        setThumbnailKey(existingPhotos[0] || (filtered.length > 0 ? 'new-0' : ''));
+      }
+      return filtered;
+    });
+  }
+
+  // Combined list of all photos for preview and thumbnail selection
+  const allPhotoItems = [
+    ...existingPhotos.map((url) => ({
+      key: url,
+      src: url,
+      isExisting: true,
+      raw: url,
+    })),
+    ...photos.map((file, idx) => ({
+      key: `new-${idx}`,
+      src: URL.createObjectURL(file),
+      isExisting: false,
+      raw: file,
+      newIdx: idx,
+    })),
+  ];
+
+  const activeThumbnailKey =
+    allPhotoItems.some((item) => item.key === thumbnailKey)
+      ? thumbnailKey
+      : (allPhotoItems[0]?.key || '');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -546,10 +591,12 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
     setSuccessMsg('');
 
     try {
-      // 1. Upload semua foto dulu
       setUploading(true);
       const uploadedUrls = [];
-      for (const file of photos) {
+      const newFileUrlMap = new Map();
+
+      for (let idx = 0; idx < photos.length; idx++) {
+        const file = photos[idx];
         try {
           const ext = file.name.split('.').pop();
           const fileName = `projects/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -573,6 +620,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
 
           if (publicUrlData?.publicUrl) {
             uploadedUrls.push(publicUrlData.publicUrl);
+            newFileUrlMap.set(`new-${idx}`, publicUrlData.publicUrl);
           }
         } catch (err) {
           console.error('Error uploading file:', file.name, err);
@@ -587,10 +635,27 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
 
       const finalPhotosUrls = [...existingPhotos, ...uploadedUrls];
 
+      let finalThumbnailUrl = null;
+      if (activeThumbnailKey) {
+        if (existingPhotos.includes(activeThumbnailKey)) {
+          finalThumbnailUrl = activeThumbnailKey;
+        } else if (newFileUrlMap.has(activeThumbnailKey)) {
+          finalThumbnailUrl = newFileUrlMap.get(activeThumbnailKey);
+        }
+      }
+      if (!finalThumbnailUrl && finalPhotosUrls.length > 0) {
+        finalThumbnailUrl = finalPhotosUrls[0];
+      }
+
       const res = await authFetch(session, url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, photos_urls: finalPhotosUrls, id: isEdit ? editingProker.id : undefined }),
+        body: JSON.stringify({
+          ...form,
+          photos_urls: finalPhotosUrls,
+          thumbnail_url: finalThumbnailUrl,
+          id: isEdit ? editingProker.id : undefined,
+        }),
       });
 
       if (res.ok) {
@@ -598,6 +663,8 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
         if (!isEdit) {
           setForm({ title: '', event_date: '', background: '' });
           setPhotos([]);
+          setExistingPhotos([]);
+          setThumbnailKey('');
         } else {
           setEditingProker(null);
         }
@@ -658,22 +725,63 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
         />
       </div>
 
-      {editingProker && existingPhotos.length > 0 && (
-        <div className="mb-4">
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">Foto Galeri Saat Ini</label>
-          <div className="grid grid-cols-4 gap-2">
-            {existingPhotos.map((url, idx) => (
-              <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-slate-200 group">
-                <img src={url} alt="Gallery" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveExistingPhoto(url)}
-                  className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-semibold"
+      {/* PHOTO GALLERY & THUMBNAIL SELECTOR */}
+      {allPhotoItems.length > 0 && (
+        <div className="mb-5">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-700">
+              Galeri Foto & Pemilihan Thumbnail Utama ({allPhotoItems.length})
+            </label>
+            <span className="text-xs text-slate-400">Pilih salah satu foto sebagai cover</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
+            {allPhotoItems.map((item) => {
+              const isThumbnail = item.key === activeThumbnailKey;
+
+              return (
+                <div
+                  key={item.key}
+                  className={`group relative aspect-video overflow-hidden rounded-xl border transition-all ${
+                    isThumbnail
+                      ? 'border-2 border-amber-500 shadow-md ring-2 ring-amber-400/30'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
                 >
-                  Hapus
-                </button>
-              </div>
-            ))}
+                  <img src={item.src} alt="Preview" className="h-full w-full object-cover" />
+
+                  {/* Thumbnail Badge / Action Button */}
+                  {isThumbnail ? (
+                    <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-md">
+                      <Star className="h-3 w-3 fill-white text-white" />
+                      Thumbnail Utama
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setThumbnailKey(item.key)}
+                      className="absolute left-1.5 top-1.5 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm opacity-90 transition-all hover:bg-amber-500 hover:opacity-100"
+                    >
+                      Jadikan Thumbnail
+                    </button>
+                  )}
+
+                  {/* Delete Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      item.isExisting
+                        ? handleRemoveExistingPhoto(item.raw)
+                        : handleRemoveNewPhoto(item.newIdx)
+                    }
+                    className="absolute bottom-1.5 right-1.5 z-10 rounded-lg bg-red-600/80 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600"
+                    title="Hapus Foto"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -691,7 +799,7 @@ function ProkerAddForm({ session, editingProker, setEditingProker, onAdded }) {
           className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-[#0F172A] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
         />
         {photos.length > 0 && (
-          <p className="mt-1.5 text-xs text-slate-500">{photos.length} foto dipilih</p>
+          <p className="mt-1.5 text-xs text-slate-500">{photos.length} foto baru ditambahkan</p>
         )}
       </div>
 
@@ -763,51 +871,54 @@ function ProkerList({ session, refreshKey, setEditingProker, onDeleted }) {
         <p className="py-6 text-center text-sm text-slate-400">Belum ada proker terdaftar.</p>
       ) : (
         <ul className="max-h-[560px] space-y-2 overflow-y-auto animate-fadeIn">
-          {projects.map((p) => (
-            <li
-              key={p.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5 hover:bg-slate-50 transition-colors"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                  {p.photos_urls?.[0] ? (
-                    <img src={p.photos_urls[0]} alt={p.title} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
-                      <FolderKanban className="h-4 w-4 text-white/60" />
-                    </div>
-                  )}
+          {projects.map((p) => {
+            const thumbUrl = p.thumbnail_url || p.photos_urls?.[0];
+            return (
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                    {thumbUrl ? (
+                      <img src={thumbUrl} alt={p.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
+                        <FolderKanban className="h-4 w-4 text-white/60" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#0F172A]">{p.title}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {p.event_date ? new Date(p.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Tanggal belum diatur'}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#0F172A]">{p.title}</p>
-                  <p className="truncate text-xs text-slate-500">
-                    {p.event_date ? new Date(p.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Tanggal belum diatur'}
-                  </p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setEditingProker(p)}
+                    className="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-colors"
+                    title="Edit proker"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(p)}
+                    disabled={deletingId === p.id}
+                    className="flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors"
+                    title="Hapus proker"
+                  >
+                    {deletingId === p.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={() => setEditingProker(p)}
-                  className="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-colors"
-                  title="Edit proker"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(p)}
-                  disabled={deletingId === p.id}
-                  className="flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors"
-                  title="Hapus proker"
-                >
-                  {deletingId === p.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -1211,6 +1322,7 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
   const [form, setForm] = useState({ title: '', description: '', event_date: '' });
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [photos, setPhotos] = useState([]);
+  const [thumbnailKey, setThumbnailKey] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -1224,13 +1336,17 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
           ? editingKegiatan.event_date.slice(0, 10)
           : '',
       });
-      setExistingPhotos(editingKegiatan.photos_urls || []);
+      const existing = editingKegiatan.photos_urls || [];
+      setExistingPhotos(existing);
       setPhotos([]);
+      const initialThumb = editingKegiatan.thumbnail_url || (existing.length > 0 ? existing[0] : '');
+      setThumbnailKey(initialThumb);
       setSuccessMsg('');
     } else {
       setForm({ title: '', description: '', event_date: '' });
       setExistingPhotos([]);
       setPhotos([]);
+      setThumbnailKey('');
     }
   }, [editingKegiatan]);
 
@@ -1239,12 +1355,50 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
   }
 
   function handlePhotoSelect(e) {
-    setPhotos(Array.from(e.target.files));
+    const newFiles = Array.from(e.target.files);
+    setPhotos((prev) => [...prev, ...newFiles]);
   }
 
   function handleRemoveExistingPhoto(urlToRemove) {
-    setExistingPhotos((prev) => prev.filter((url) => url !== urlToRemove));
+    setExistingPhotos((prev) => {
+      const filtered = prev.filter((url) => url !== urlToRemove);
+      if (thumbnailKey === urlToRemove) {
+        setThumbnailKey(filtered[0] || (photos.length > 0 ? 'new-0' : ''));
+      }
+      return filtered;
+    });
   }
+
+  function handleRemoveNewPhoto(indexToRemove) {
+    setPhotos((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== indexToRemove);
+      if (thumbnailKey === `new-${indexToRemove}`) {
+        setThumbnailKey(existingPhotos[0] || (filtered.length > 0 ? 'new-0' : ''));
+      }
+      return filtered;
+    });
+  }
+
+  const allPhotoItems = [
+    ...existingPhotos.map((url) => ({
+      key: url,
+      src: url,
+      isExisting: true,
+      raw: url,
+    })),
+    ...photos.map((file, idx) => ({
+      key: `new-${idx}`,
+      src: URL.createObjectURL(file),
+      isExisting: false,
+      raw: file,
+      newIdx: idx,
+    })),
+  ];
+
+  const activeThumbnailKey =
+    allPhotoItems.some((item) => item.key === thumbnailKey)
+      ? thumbnailKey
+      : (allPhotoItems[0]?.key || '');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -1254,7 +1408,10 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
     try {
       setUploading(true);
       const uploadedUrls = [];
-      for (const file of photos) {
+      const newFileUrlMap = new Map();
+
+      for (let idx = 0; idx < photos.length; idx++) {
+        const file = photos[idx];
         try {
           const ext = file.name.split('.').pop();
           const fileName = `activities/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -1274,6 +1431,7 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
 
           if (publicUrlData?.publicUrl) {
             uploadedUrls.push(publicUrlData.publicUrl);
+            newFileUrlMap.set(`new-${idx}`, publicUrlData.publicUrl);
           }
         } catch (err) {
           console.error('Error uploading file:', file.name, err);
@@ -1287,12 +1445,25 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
       const method = isEdit ? 'PUT' : 'POST';
       const finalPhotosUrls = [...existingPhotos, ...uploadedUrls];
 
+      let finalThumbnailUrl = null;
+      if (activeThumbnailKey) {
+        if (existingPhotos.includes(activeThumbnailKey)) {
+          finalThumbnailUrl = activeThumbnailKey;
+        } else if (newFileUrlMap.has(activeThumbnailKey)) {
+          finalThumbnailUrl = newFileUrlMap.get(activeThumbnailKey);
+        }
+      }
+      if (!finalThumbnailUrl && finalPhotosUrls.length > 0) {
+        finalThumbnailUrl = finalPhotosUrls[0];
+      }
+
       const res = await authFetch(session, url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           photos_urls: finalPhotosUrls,
+          thumbnail_url: finalThumbnailUrl,
           id: isEdit ? editingKegiatan.id : undefined,
         }),
       });
@@ -1302,6 +1473,8 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
         if (!isEdit) {
           setForm({ title: '', description: '', event_date: '' });
           setPhotos([]);
+          setExistingPhotos([]);
+          setThumbnailKey('');
         } else {
           setEditingKegiatan(null);
         }
@@ -1362,22 +1535,63 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
         />
       </div>
 
-      {editingKegiatan && existingPhotos.length > 0 && (
-        <div className="mb-4">
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">Foto Saat Ini</label>
-          <div className="grid grid-cols-4 gap-2">
-            {existingPhotos.map((url, idx) => (
-              <div key={idx} className="relative aspect-video overflow-hidden rounded-lg border border-slate-200 group">
-                <img src={url} alt="Kegiatan" className="h-full w-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveExistingPhoto(url)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/55 text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
+      {/* PHOTO GALLERY & THUMBNAIL SELECTOR */}
+      {allPhotoItems.length > 0 && (
+        <div className="mb-5">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-700">
+              Galeri Foto & Pemilihan Thumbnail Utama ({allPhotoItems.length})
+            </label>
+            <span className="text-xs text-slate-400">Pilih salah satu foto sebagai cover</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
+            {allPhotoItems.map((item) => {
+              const isThumbnail = item.key === activeThumbnailKey;
+
+              return (
+                <div
+                  key={item.key}
+                  className={`group relative aspect-video overflow-hidden rounded-xl border transition-all ${
+                    isThumbnail
+                      ? 'border-2 border-rose-500 shadow-md ring-2 ring-rose-400/30'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
                 >
-                  Hapus
-                </button>
-              </div>
-            ))}
+                  <img src={item.src} alt="Preview" className="h-full w-full object-cover" />
+
+                  {/* Thumbnail Badge / Action Button */}
+                  {isThumbnail ? (
+                    <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-md">
+                      <Star className="h-3 w-3 fill-white text-white" />
+                      Thumbnail Utama
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setThumbnailKey(item.key)}
+                      className="absolute left-1.5 top-1.5 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm opacity-90 transition-all hover:bg-rose-600 hover:opacity-100"
+                    >
+                      Jadikan Thumbnail
+                    </button>
+                  )}
+
+                  {/* Delete Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      item.isExisting
+                        ? handleRemoveExistingPhoto(item.raw)
+                        : handleRemoveNewPhoto(item.newIdx)
+                    }
+                    className="absolute bottom-1.5 right-1.5 z-10 rounded-lg bg-red-600/80 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600"
+                    title="Hapus Foto"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1395,7 +1609,7 @@ function KegiatanAddForm({ session, editingKegiatan, setEditingKegiatan, onAdded
           className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-[#0F172A] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
         />
         {photos.length > 0 && (
-          <p className="mt-1.5 text-xs text-slate-500">{photos.length} foto dipilih</p>
+          <p className="mt-1.5 text-xs text-slate-500">{photos.length} foto baru ditambahkan</p>
         )}
       </div>
 
@@ -1474,51 +1688,54 @@ function KegiatanList({ session, refreshKey, setEditingKegiatan, onDeleted }) {
         <p className="py-6 text-center text-sm text-slate-400">Belum ada kegiatan terdaftar.</p>
       ) : (
         <ul className="max-h-[560px] space-y-2 overflow-y-auto">
-          {kegiatanList.map((k) => (
-            <li
-              key={k.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5 hover:bg-slate-50 transition-colors"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
-                  {k.photos_urls?.[0] ? (
-                    <img src={k.photos_urls[0]} alt={k.title} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-rose-500 to-[#0F172A]">
-                      <Heart className="h-4 w-4 text-white/60" />
-                    </div>
-                  )}
+          {kegiatanList.map((k) => {
+            const thumbUrl = k.thumbnail_url || k.photos_urls?.[0];
+            return (
+              <li
+                key={k.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                    {thumbUrl ? (
+                      <img src={thumbUrl} alt={k.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-rose-500 to-[#0F172A]">
+                        <Heart className="h-4 w-4 text-white/60" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#0F172A]">{k.title}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {k.event_date ? formatDate(k.event_date) : 'Tanpa tanggal'}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#0F172A]">{k.title}</p>
-                  <p className="truncate text-xs text-slate-500">
-                    {k.event_date ? formatDate(k.event_date) : 'Tanpa tanggal'}
-                  </p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setEditingKegiatan(k)}
+                    className="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-colors"
+                    title="Edit kegiatan"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(k)}
+                    disabled={deletingId === k.id}
+                    className="flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors"
+                    title="Hapus kegiatan"
+                  >
+                    {deletingId === k.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={() => setEditingKegiatan(k)}
-                  className="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200 transition-colors"
-                  title="Edit kegiatan"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => handleDelete(k)}
-                  disabled={deletingId === k.id}
-                  className="flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors"
-                  title="Hapus kegiatan"
-                >
-                  {deletingId === k.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

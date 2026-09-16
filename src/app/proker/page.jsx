@@ -58,7 +58,7 @@ const FALLBACK_PROJECTS = [
 async function getAllProjects() {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, event_date, background, photos_urls, created_at')
+    .select('id, title, event_date, background, thumbnail_url, photos_urls, created_at')
     .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
@@ -69,6 +69,7 @@ async function getAllProjects() {
     title: p.title,
     description: p.background || '',
     event_date: p.event_date,
+    thumbnail_url: p.thumbnail_url,
     photos_urls: p.photos_urls || [],
     created_at: p.created_at,
   }));
@@ -110,28 +111,30 @@ export default async function ProkerPage() {
           <p className="text-center text-sm text-slate-500">Belum ada program kerja yang dipublikasikan.</p>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((proker) => (
-              <Link
-                key={proker.id}
-                href={`/proker/${proker.id}`}
-                className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                    {proker.photos_urls?.[0] ? (
-                      <Image
-                        src={proker.photos_urls[0]}
-                        alt={proker.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 400px"
-                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
-                        <FolderKanban className="h-10 w-10 text-white/40" />
-                      </div>
-                    )}
-                  </div>
+            {projects.map((proker) => {
+              const thumbnailSrc = proker.thumbnail_url || proker.photos_urls?.[0];
+              return (
+                <Link
+                  key={proker.id}
+                  href={`/proker/${proker.id}`}
+                  className="group overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                      {thumbnailSrc ? (
+                        <Image
+                          src={thumbnailSrc}
+                          alt={proker.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, 400px"
+                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0F172A] to-[#1E3A8A]">
+                          <FolderKanban className="h-10 w-10 text-white/40" />
+                        </div>
+                      )}
+                    </div>
                   <div className="p-5">
                     {proker.event_date && (
                       <span className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
@@ -152,8 +155,9 @@ export default async function ProkerPage() {
                   </span>
                 </div>
               </Link>
-            ))}
-          </div>
+            );
+          })}
+        </div>
         )}
       </section>
     </div>

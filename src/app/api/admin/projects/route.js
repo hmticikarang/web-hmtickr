@@ -10,7 +10,7 @@ export async function GET(request) {
 
   const { data, error } = await supabaseAdmin
     .from('projects')
-    .select('id, title, event_date, background, achievements, photos_urls, division_id, divisions(id, name), created_at')
+    .select('id, title, event_date, background, achievements, thumbnail_url, photos_urls, division_id, divisions(id, name), created_at')
     .order('event_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
@@ -28,7 +28,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { title, event_date, background, achievements, division_id, photos_urls } = body;
+  const { title, event_date, background, achievements, division_id, photos_urls, thumbnail_url } = body;
 
   if (!title || !background) {
     return NextResponse.json(
@@ -36,6 +36,9 @@ export async function POST(request) {
       { status: 400 }
     );
   }
+
+  const finalPhotos = photos_urls || [];
+  const finalThumbnail = thumbnail_url && finalPhotos.includes(thumbnail_url) ? thumbnail_url : (finalPhotos[0] || null);
 
   const { data, error } = await supabaseAdmin
     .from('projects')
@@ -45,9 +48,10 @@ export async function POST(request) {
       background,
       achievements: achievements || '',
       division_id: division_id || null,
-      photos_urls: photos_urls || [],
+      thumbnail_url: finalThumbnail,
+      photos_urls: finalPhotos,
     })
-    .select('id, title, event_date, background, achievements, photos_urls, division_id, created_at')
+    .select('id, title, event_date, background, achievements, thumbnail_url, photos_urls, division_id, created_at')
     .single();
 
   if (error) {
@@ -67,7 +71,7 @@ export async function PUT(request) {
   }
 
   const body = await request.json();
-  const { id, title, event_date, background, achievements, division_id, photos_urls } = body;
+  const { id, title, event_date, background, achievements, division_id, photos_urls, thumbnail_url } = body;
 
   if (!id) {
     return NextResponse.json({ error: 'ID proker wajib disertakan.' }, { status: 400 });
@@ -96,6 +100,9 @@ export async function PUT(request) {
     }
   }
 
+  const finalPhotos = photos_urls || [];
+  const finalThumbnail = thumbnail_url && finalPhotos.includes(thumbnail_url) ? thumbnail_url : (finalPhotos[0] || null);
+
   const { data, error } = await supabaseAdmin
     .from('projects')
     .update({
@@ -104,10 +111,11 @@ export async function PUT(request) {
       background,
       achievements: achievements || '',
       division_id: division_id || null,
-      photos_urls: photos_urls || [],
+      thumbnail_url: finalThumbnail,
+      photos_urls: finalPhotos,
     })
     .eq('id', id)
-    .select('id, title, event_date, background, achievements, photos_urls, division_id, created_at')
+    .select('id, title, event_date, background, achievements, thumbnail_url, photos_urls, division_id, created_at')
     .single();
 
   if (error) {

@@ -50,19 +50,11 @@ export async function POST(request) {
     }
 
     // 3. Generasi nomor pendaftar (app_number) secara aman di server side (bypass RLS)
+    // Menggunakan timestamp + angka acak agar dijamin unik meski ada request bersamaan
     const year = new Date().getFullYear();
-    const { count, error: countError } = await supabaseAdmin
-      .from('applicants')
-      .select('id', { count: 'exact', head: true })
-      .like('app_number', `OPREC-${year}-%`);
-
-    if (countError) {
-      console.error('Error counting applicants:', countError.message);
-    }
-
-    const nextNumber = (count || 0) + 1;
-    const padded = String(nextNumber).padStart(3, '0');
-    const app_number = `OPREC-${year}-${padded}`;
+    const timestamp = Date.now().toString().slice(-4);
+    const randomNum = Math.floor(100 + Math.random() * 900);
+    const app_number = `OPREC-${year}-${timestamp}${randomNum}`;
 
     const payload = {
       app_number,
@@ -86,7 +78,16 @@ export async function POST(request) {
       .single();
 
     if (insertError) {
-      console.error('Error inserting applicant:', insertError.message);
+      console.error('Error inserting applicant:', insertError.message, '| Code:', insertError.code);
+
+      // Tangani duplicate key (race condition pada app_number)
+      if (insertError.code === '23505') {
+        return NextResponse.json(
+          { error: 'Terjadi konflik nomor pendaftaran. Silakan coba submit kembali.' },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
         { error: `Gagal menyimpan pendaftaran: ${insertError.message}` },
         { status: 500 }
